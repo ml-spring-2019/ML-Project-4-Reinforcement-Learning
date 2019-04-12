@@ -263,7 +263,6 @@ public class ExMarioAgent implements AgentInterface {
 	public Action agent_step(double r, Observation o) {
 		step_number++;
 		total_steps++;
-		System.out.println("walkfeiwafoeawjfijawefjawe");
 		return getAction(o);
 	}
 
@@ -276,7 +275,7 @@ public class ExMarioAgent implements AgentInterface {
 		else
 			last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
-		System.out.println("walk_hesitating: " + walk_hesitating);
+
 
 //		Enumeration e = last_actions.elements();
 
@@ -320,7 +319,6 @@ public class ExMarioAgent implements AgentInterface {
 		/*
 		 * Check the blocks in the area to mario's upper right
 		 */
-		System.out.println("current tile: \n"+ ExMarioAgent.getTileAt(mario.x, mario.y, o));
 		for (int up=0; up<5; up++) {
 			for (int right = 0; right<7; right++) {
 				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
@@ -402,7 +400,8 @@ public class ExMarioAgent implements AgentInterface {
 		act.intArray[0] = walk_hesitating?0:1;
 
 		// 0, 1 for jump
-		act.intArray[1] = rand.nextDouble()>jump_hesitation?1:0;
+		double jump_rng = rand.nextDouble();
+		act.intArray[1] = jump_rng>jump_hesitation?1:0;
 
 		// 0, 1 for speed
 		act.intArray[2] = (is_pit||!monster_near)?1:0;//rand.nextBoolean()?1:0;
@@ -410,12 +409,19 @@ public class ExMarioAgent implements AgentInterface {
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
-		System.out.println("walk_hesitating: " + act.intArray[0] );
+		System.out.println("WALKING: ");
+		System.out.println("\tdirection_looking: " + act.intArray[0] );
+		System.out.println("\twalk_hesitating: " + walk_hesitating);
 		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-		System.out.println("jump: " + act.intArray[1]);
+		System.out.println("SPEED: ");
+		System.out.println("\tspeed: " + act.intArray[2]);
+		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
+		System.out.println("JUMPING: ");
+		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
+		System.out.println("\tjump_rng: " + jump_rng);
 		System.out.println("\tjump_hesitation: " + jump_hesitation);
 		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
-		System.out.println("speed: " + act.intArray[2]);
 
 		return act;
 	}
