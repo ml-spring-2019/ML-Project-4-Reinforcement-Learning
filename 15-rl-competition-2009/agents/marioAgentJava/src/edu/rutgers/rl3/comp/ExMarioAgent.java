@@ -47,6 +47,32 @@ public class ExMarioAgent implements AgentInterface {
 */
 	public Hashtable<Integer, Integer> actionValueFunction = new Hashtable<Integer, Integer>();
 
+	private int NUMBER_OF_STATES = 6;
+	private int NUMBER_OF_ACTIONS = 6;
+
+	private int[][] state_rewards;
+
+	private int getIndexOfReward(boolean[] states){
+        String gen_string = "";
+        for (boolean s : states){
+            gen_string += s ? "1" : "0";
+        }
+        System.out.println("[DEBUG]: gen_string: " + gen_string);
+        return Integer.parseInt(gen_string, 2);
+	}
+
+	private void initializeStateRewards(){
+	    int rows = (int) Math.pow(2, NUMBER_OF_STATES);
+	    int cols = NUMBER_OF_ACTIONS;
+	    state_rewards = new int[rows][NUMBER_OF_ACTIONS];
+	    for (int i = 0; i < rows; i++){
+	        for (int j = 0; j < cols; j++){
+	            state_rewards[i][j] = 0;
+	        }
+	    }
+
+	}
+
 	/*
 	 * Returns the char representing the tile at the given location.
 	 * If unknown, returns '\0'.
@@ -244,15 +270,10 @@ public class ExMarioAgent implements AgentInterface {
 		Monster mario = ExMarioAgent.getMario(o);
 		ArrayList episode = new ArrayList();
 
-		actionValueFunction.put(0, -2);
-		actionValueFunction.put(1, 1);
-		actionValueFunction.put(2, 1);
-		actionValueFunction.put(3, 1);
-		actionValueFunction.put(4, 1);
-		actionValueFunction.put(5, 1);
-		actionValueFunction.put(6, 1);
-		actionValueFunction.put(7, 1);
-		actionValueFunction.put(8, -1);
+		initializeStateRewards();
+
+        boolean[] t = new boolean[]{true, false, true, false, true, false};
+		System.out.println("Index of reward test: " + getIndexOfReward(t));
 
 	  actionNum = 0;
 		trial_start = new Date().getTime();
@@ -409,19 +430,19 @@ public class ExMarioAgent implements AgentInterface {
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
-		System.out.println("WALKING: ");
-		System.out.println("\tdirection_looking: " + act.intArray[0] );
-		System.out.println("\twalk_hesitating: " + walk_hesitating);
-		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-		System.out.println("SPEED: ");
-		System.out.println("\tspeed: " + act.intArray[2]);
-		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
-		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-		System.out.println("JUMPING: ");
-		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
-		System.out.println("\tjump_rng: " + jump_rng);
-		System.out.println("\tjump_hesitation: " + jump_hesitation);
-		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+//		System.out.println("WALKING: ");
+//		System.out.println("\tdirection_looking: " + act.intArray[0] );
+//		System.out.println("\twalk_hesitating: " + walk_hesitating);
+//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
+//		System.out.println("SPEED: ");
+//		System.out.println("\tspeed: " + act.intArray[2]);
+//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
+//		System.out.println("JUMPING: ");
+//		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
+//		System.out.println("\tjump_rng: " + jump_rng);
+//		System.out.println("\tjump_hesitation: " + jump_hesitation);
+//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
 
 		return act;
 	}
