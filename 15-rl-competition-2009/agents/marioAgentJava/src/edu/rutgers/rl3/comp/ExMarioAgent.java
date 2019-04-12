@@ -14,6 +14,7 @@ import java.util.Vector;
 import java.util.Random;
 import java.io.*;
 import java.util.*;
+import java.util.Hashtable;
 
 /**
  * A simple agent that:
@@ -24,19 +25,32 @@ import java.util.*;
  * - tends to jump when there is a monster nearby
  * - tends to jump when there is a pit nearby
  * - tends to run when there is nothing nearby
- * 
+ *
  * Also, it will remember the last trial, and repeat it exactly except
  * for the last 7 steps (assuming there are at least 7 steps).
- * 
+ *
  * @author jasmuth
  *
  */
 public class ExMarioAgent implements AgentInterface {
-	
-	/**
+
+/*
+0: touch m.types = 1,2,4,5,8
+1: Touch m.types = 6,7
+2: Jump over barrier
+3: Hit non-brick block
+4: Jump over m.types = 1,2,4,5,8
+5: Killing m.types
+6: touch coins
+7: moving forward
+8: moving backward
+*/
+	public Hashtable<Integer, Integer> actionValueFunction = new Hashtable<Integer, Integer>();
+
+	/*
 	 * Returns the char representing the tile at the given location.
 	 * If unknown, returns '\0'.
-	 * 
+	 *
 	 * Valid tiles:
 	 * M - the tile mario is currently on. there is no tile for a monster.
 	 * $ - a coin
@@ -49,7 +63,7 @@ public class ExMarioAgent implements AgentInterface {
 	 *  first bit is "cannot go through this tile from above"
 	 *  second bit is "cannot go through this tile from below"
 	 *  third bit is "cannot go through this tile from either side"
-	 * 
+	 *
 	 * @param x
 	 * @param y
 	 * @param obs
@@ -66,10 +80,10 @@ public class ExMarioAgent implements AgentInterface {
 		int index = y*22+x;
 		return obs.charArray[index];
 	}
-	
+
 	/**
 	 * All you need to know about a monster.
-	 * 
+	 *
 	 * @author jasmuth
 	 *
 	 */
@@ -109,10 +123,10 @@ public class ExMarioAgent implements AgentInterface {
 		 */
 		boolean winged;
 	}
-	
+
 	/**
 	 * Gets all the monsters from the observation. Mario is included in this list.
-	 * 
+	 *
 	 * @param obs
 	 * @return
 	 */
@@ -170,7 +184,7 @@ public class ExMarioAgent implements AgentInterface {
 	}
 	/**
 	 * Gets just mario's information.
-	 * 
+	 *
 	 * @param obs
 	 * @return
 	 */
@@ -182,7 +196,7 @@ public class ExMarioAgent implements AgentInterface {
 		}
 		return null;
 	}
-	
+
 	Random rand;
 	/**
 	 * When this is true, Mario is pausing for some number of steps
@@ -211,7 +225,7 @@ public class ExMarioAgent implements AgentInterface {
 	Vector<Action> this_actions;
 
 	int actionNum;
-	
+
 	ExMarioAgent() {
 		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
@@ -221,13 +235,26 @@ public class ExMarioAgent implements AgentInterface {
 	public void agent_init(String task) {
 		total_steps = 0;
 	}
-	
+
 	public void agent_cleanup() {
 
 	}
-	
+
 	public Action agent_start(Observation o) {
-	    actionNum = 0;
+		Monster mario = ExMarioAgent.getMario(o);
+		ArrayList episode = new ArrayList();
+
+		actionValueFunction.put(0, -2);
+		actionValueFunction.put(1, 1);
+		actionValueFunction.put(2, 1);
+		actionValueFunction.put(3, 1);
+		actionValueFunction.put(4, 1);
+		actionValueFunction.put(5, 1);
+		actionValueFunction.put(6, 1);
+		actionValueFunction.put(7, 1);
+		actionValueFunction.put(8, -1);
+
+	  actionNum = 0;
 		trial_start = new Date().getTime();
 		step_number = 0;
 		return getAction(o);
@@ -236,6 +263,7 @@ public class ExMarioAgent implements AgentInterface {
 	public Action agent_step(double r, Observation o) {
 		step_number++;
 		total_steps++;
+		System.out.println("walkfeiwafoeawjfijawefjawe");
 		return getAction(o);
 	}
 
@@ -265,7 +293,9 @@ public class ExMarioAgent implements AgentInterface {
 		System.out.println("message asked:"+msg);
 		return null;
 	}
-	
+
+// States: tiles
+
 	Action getAction(Observation o) {
 
 		if (last_actions.size() > step_number) {
@@ -276,20 +306,21 @@ public class ExMarioAgent implements AgentInterface {
 
 	    actionNum++;
 		System.out.println("\n-----------------------------\nAction: " + actionNum + "\n-----------------------------");
-		
+
 		Monster mario = ExMarioAgent.getMario(o);
 		Monster[] monsters = ExMarioAgent.getMonsters(o);
-		
+
 		/*
 		 * sometimes jump for no reason at all. at the end of this function,
 		 * the value of this variable will be compared against a random number
 		 * to see if mario jumps
 		 */
 		double jump_hesitation = .95;
-		
+
 		/*
 		 * Check the blocks in the area to mario's upper right
 		 */
+		System.out.println("current tile: \n"+ ExMarioAgent.getTileAt(mario.x, mario.y, o));
 		for (int up=0; up<5; up++) {
 			for (int right = 0; right<7; right++) {
 				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
@@ -306,7 +337,7 @@ public class ExMarioAgent implements AgentInterface {
 				}
 			}
 		}
-		
+
 		/*
 		 * Search for a pit in front of mario.
 		 */
@@ -315,7 +346,7 @@ public class ExMarioAgent implements AgentInterface {
 			boolean pit_col = true;
 			for (int down=0; pit_col && mario.y-down>=0; down++) {
 				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
-				if (tile != ' ' && tile != 'M' && tile != '\0') 
+				if (tile != ' ' && tile != 'M' && tile != '\0')
 					pit_col = false;
 			}
 			if (pit_col)
@@ -325,7 +356,7 @@ public class ExMarioAgent implements AgentInterface {
 			// always jump if there is a pit
 			jump_hesitation = 0;
 		}
-		
+
 		/*
 		 * Look for nearby monsters by checking the positions against mario's
 		 */
@@ -345,11 +376,11 @@ public class ExMarioAgent implements AgentInterface {
 				monster_near = true;
 			}
 		}
-		
+
 		// hold down the jump button while in the air sometimes, to jump higher
 		if (mario.sy > .1)
 			jump_hesitation *= .5;
-		
+
 		// Sometimes hesitate if there is a monster near.
 		if (walk_hesitating) {
 			if (!monster_near || rand.nextDouble() > .8)
@@ -363,7 +394,7 @@ public class ExMarioAgent implements AgentInterface {
 		// sometimes hesitate even if there isn't one
 		else if (rand.nextDouble() > .9)
 			walk_hesitating = true;
-		
+
 		Action act = new Action(3, 0);
 
 
