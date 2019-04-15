@@ -48,9 +48,10 @@ public class ExMarioAgent implements AgentInterface {
 	public Hashtable<Integer, Integer> actionValueFunction = new Hashtable<Integer, Integer>();
 
 	private int NUMBER_OF_STATES = 6;
-	private int NUMBER_OF_ACTIONS = 6;
+	private int NUMBER_OF_ACTIONS = 5;
 
 	private int[][] state_rewards;
+	private double reward;
 
 	private int getIndexOfReward(boolean[] states){
         String gen_string = "";
@@ -275,15 +276,19 @@ public class ExMarioAgent implements AgentInterface {
         boolean[] t = new boolean[]{true, false, true, false, true, false};
 		System.out.println("Index of reward test: " + getIndexOfReward(t));
 
-	  actionNum = 0;
+	    actionNum = 0;
 		trial_start = new Date().getTime();
 		step_number = 0;
+
+		reward = 0;
 		return getAction(o);
 	}
 
 	public Action agent_step(double r, Observation o) {
 		step_number++;
 		total_steps++;
+		reward += r;
+		System.out.println("delta_r: "+ r + "\t| reward: " + reward);
 		return getAction(o);
 	}
 
@@ -297,7 +302,6 @@ public class ExMarioAgent implements AgentInterface {
 			last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
 
-
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
@@ -307,6 +311,7 @@ public class ExMarioAgent implements AgentInterface {
 
 		System.out.println("ended after "+total_steps+" total steps");
 		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
+
 	}
 
 	public String agent_message(String msg) {
