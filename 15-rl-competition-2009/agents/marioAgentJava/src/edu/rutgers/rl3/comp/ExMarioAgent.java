@@ -333,7 +333,6 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t{");
 
 		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
-		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
 		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
 		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
@@ -368,6 +367,8 @@ public class ExMarioAgent implements AgentInterface {
 
         debug_out.println("\n\t\t],");
         debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
+        debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
+        debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
         debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
         debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
         debug_out.print("\t}");
