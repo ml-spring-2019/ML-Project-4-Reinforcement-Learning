@@ -387,6 +387,10 @@ public class ExMarioAgent implements AgentInterface {
 		if (last_actions.size() > step_number) {
 			Action act = last_actions.get(step_number);
 			this_actions.add(act);
+
+			debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
+			debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
+			debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false));
 			return act;
 		}
 
@@ -478,7 +482,7 @@ public class ExMarioAgent implements AgentInterface {
 		else if (rand.nextDouble() > .9)
 			walk_hesitating = true;
 
-		Action act = new Action(3, 0);
+		Action act = new Action(8, 0);
 
 
 		// -1, 0, 1 for direction, 1 is to the right
@@ -496,7 +500,7 @@ public class ExMarioAgent implements AgentInterface {
 
 		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
 		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-		debug_out.println("\t\t\t\t\"will_jump\": " + (is_pit ? true : false) + ",");
+		debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
 		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
