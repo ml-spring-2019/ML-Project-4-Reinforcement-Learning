@@ -51,14 +51,19 @@ public class ExMarioAgent implements AgentInterface {
 	private int NUMBER_OF_ACTIONS = 5;
 
 	private int[][] state_rewards;
-	private double reward;
+	private double total_reward;
+	private double episode_reward;
+	private int episode_num;
+
+
+	private PrintWriter debug_out;
 
 	private int getIndexOfReward(boolean[] states){
         String gen_string = "";
         for (boolean s : states){
             gen_string += s ? "1" : "0";
         }
-        System.out.println("[DEBUG]: gen_string: " + gen_string);
+//        System.out.println("[DEBUG]: gen_string: " + gen_string);
         return Integer.parseInt(gen_string, 2);
 	}
 
@@ -257,6 +262,23 @@ public class ExMarioAgent implements AgentInterface {
 		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
+		initializeStateRewards();
+
+//        boolean[] t = new boolean[]{true, false, true, false, true, false};
+//		System.out.println("Index of reward test: " + getIndexOfReward(t));
+
+	    actionNum = 0;
+        total_reward = 0;
+        episode_num = 0;
+
+
+        try {
+            debug_out = new PrintWriter("debug_log.json", "UTF-8");
+        } catch (Exception e){
+            System.out.println("File not found.");
+            return;
+        }
+        debug_out.println("{\n\t\"episodes\":[");
 	}
 
 	public void agent_init(String task) {
@@ -264,32 +286,64 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public void agent_cleanup() {
-
+	    debug_out.println("\n]}");
+        debug_out.close();
+        System.out.println("Check debug_log.json for output.");
 	}
 
 	public Action agent_start(Observation o) {
 		Monster mario = ExMarioAgent.getMario(o);
 		ArrayList episode = new ArrayList();
+		episode_num++;
+		episode_reward = 0;
 
-		initializeStateRewards();
-
-        boolean[] t = new boolean[]{true, false, true, false, true, false};
-		System.out.println("Index of reward test: " + getIndexOfReward(t));
-
-	    actionNum = 0;
 		trial_start = new Date().getTime();
 		step_number = 0;
+		if (episode_num != 1){
+		debug_out.println(",");
+		}
 
-		reward = 0;
-		return getAction(o);
+
+		debug_out.println("\t{");
+		debug_out.println("\t\t\"episode\": " + episode_num + ",");
+		debug_out.println("\t\t\"steps\":[");
+
+		debug_out.println("\t\t{");
+        debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
+		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
+		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
+		debug_out.println("\t\t\t\"actions_to_perform\": {");
+		Action a = getAction(o);
+		debug_out.println("\t\t\t}");
+        debug_out.print("\t\t}");
+
+		return a;
 	}
 
 	public Action agent_step(double r, Observation o) {
+        debug_out.println(",");
+
 		step_number++;
 		total_steps++;
-		reward += r;
-		System.out.println("delta_r: "+ r + "\t| reward: " + reward);
-		return getAction(o);
+
+		total_reward += r;
+		episode_reward += r;
+
+
+		debug_out.println("\t\t{");
+
+		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
+		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
+		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
+		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
+		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
+		debug_out.println("\t\t\t\"actions_to_perform\": {");
+
+        Action a = getAction(o);
+        debug_out.println("\t\t\t}");
+        debug_out.print("\t\t}");
+
+		return a;
 	}
 
 	public void agent_end(double r) {
@@ -309,8 +363,15 @@ public class ExMarioAgent implements AgentInterface {
 //		}
 
 
-		System.out.println("ended after "+total_steps+" total steps");
-		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
+//		System.out.println("ended after "+total_steps+" total steps");
+//		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
+
+        debug_out.println("\n\t\t],");
+        debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
+        debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
+        debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
+        debug_out.print("\t}");
+
 
 	}
 
@@ -330,8 +391,6 @@ public class ExMarioAgent implements AgentInterface {
 		}
 
 	    actionNum++;
-		System.out.println("\n-----------------------------\nAction: " + actionNum + "\n-----------------------------");
-
 		Monster mario = ExMarioAgent.getMario(o);
 		Monster[] monsters = ExMarioAgent.getMonsters(o);
 
@@ -435,19 +494,28 @@ public class ExMarioAgent implements AgentInterface {
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
-		System.out.println("WALKING: ");
-		System.out.println("\tdirection_looking: " + act.intArray[0] );
-		System.out.println("\twalk_hesitating: " + walk_hesitating);
-		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-		System.out.println("SPEED: ");
-		System.out.println("\tspeed: " + act.intArray[2]);
-		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
-		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-		System.out.println("JUMPING: ");
-		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
-		System.out.println("\tjump_rng: " + jump_rng);
-		System.out.println("\tjump_hesitation: " + jump_hesitation);
-		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
+		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
+		debug_out.println("\t\t\t\t\"will_jump\": " + (is_pit ? true : false) + ",");
+		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
+		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
+		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
+		debug_out.println("\t\t\t\t\"jump_rng\": " + jump_rng + ",");
+		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation);
+
+//		System.out.println("WALKING: ");
+//		System.out.println("\tdirection_looking: " + act.intArray[0] );
+//		System.out.println("\twalk_hesitating: " + walk_hesitating);
+//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
+//		System.out.println("SPEED: ");
+//		System.out.println("\tspeed: " + act.intArray[2]);
+//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
+//		System.out.println("JUMPING: ");
+//		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
+//		System.out.println("\tjump_rng: " + jump_rng);
+//		System.out.println("\tjump_hesitation: " + jump_hesitation);
+//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
 
 		return act;
 	}
