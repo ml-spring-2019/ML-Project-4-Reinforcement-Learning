@@ -44,6 +44,8 @@ public class ExMarioAgent implements AgentInterface {
 
 	private PrintWriter debug_out;
 
+	private Boolean[] cur_state;
+
 	private int getIndexOfReward(boolean[] states){
         String gen_string = "";
         for (boolean s : states){
@@ -244,6 +246,7 @@ public class ExMarioAgent implements AgentInterface {
 	int actionNum;
 
 	ExMarioAgent() {
+		cur_state = new Boolean[8];
 		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
@@ -277,7 +280,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	public Action agent_start(Observation o) {
 		ArrayList episode = new ArrayList();
-		episode_num++;
+
 		episode_reward = 0;
 
 		trial_start = new Date().getTime();
@@ -299,7 +302,7 @@ public class ExMarioAgent implements AgentInterface {
 		Action a = getAction(o);
 		debug_out.println("\t\t\t}");
         debug_out.print("\t\t}");
-
+		episode_num++;
 		return a;
 	}
 
@@ -338,8 +341,8 @@ public class ExMarioAgent implements AgentInterface {
 			last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
 
-		//
-
+		if (cur_state[WIN] == false)
+			cur_state[DEAD] = true;
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
@@ -351,6 +354,8 @@ public class ExMarioAgent implements AgentInterface {
 //		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
 
         debug_out.println("\n\t\t],");
+				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+				debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
         debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
         debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
         debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
@@ -378,7 +383,8 @@ public class ExMarioAgent implements AgentInterface {
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
 //	The current state
-		Boolean[] cur_state = new Boolean [] {false, false, false, false, false, false, false, false};
+		for (int state = 0; state < cur_state.length; state++)
+			cur_state[state] = false;
 
 		if (last_actions.size() > step_number) {
 			Action act = last_actions.get(step_number);
@@ -400,6 +406,10 @@ public class ExMarioAgent implements AgentInterface {
 		 * to see if mario jumps
 		 */
 		double jump_hesitation = .95;
+
+		// if mario finishes the level
+		if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!')
+			cur_state[WIN] = true;
 
 		/*
 		 * Check the blocks in the area to mario's upper right
@@ -538,9 +548,7 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t\t\t\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD]);
+		debug_out.println("\t\t\t\t\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
 
 		return act;
 	}
