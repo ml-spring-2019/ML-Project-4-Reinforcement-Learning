@@ -282,7 +282,6 @@ public class ExMarioAgent implements AgentInterface {
 
 		trial_start = new Date().getTime();
 		step_number = 0;
-		debug_out.println("begin");
 		if (episode_num != 1){
 		debug_out.println(",");
 		}
@@ -367,6 +366,14 @@ public class ExMarioAgent implements AgentInterface {
 		return null;
 	}
 
+	private static final int MONSTER = 0;
+	private static final int PIT = 1;
+	private static final int PIPE = 2;
+	private static final int BREAKABLE_BLOCK = 3;
+	private static final int QUESTION_BLOCK = 4;
+	private static final int BONUS_ITEM = 5;
+	private static final int WIN = 6;
+	private static final int DEAD = 7;
 // States: tiles
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
@@ -402,17 +409,17 @@ public class ExMarioAgent implements AgentInterface {
 				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
 
 				if (tile == 'b') {
-					cur_state[3] = true;
+					cur_state[BREAKABLE_BLOCK] = true;
 					// tend to jump more if there is a block closer
 					jump_hesitation *= 1.0*right/7;
 				}
 				else if (tile == '?') {
-					cur_state[4] = true;
+					cur_state[QUESTION_BLOCK] = true;
 					// tend to jump more if there is a block closer
 					jump_hesitation *= 1.0*right/7;
 				}
 				else if (tile == '$') {
-					cur_state[5] = true;
+					cur_state[BONUS_ITEM] = true;
 					// jump often if there is a coin
 					jump_hesitation *= .7;
 				}
@@ -436,7 +443,7 @@ public class ExMarioAgent implements AgentInterface {
 
 		if (is_pit) {
 			// always jump if there is a pit
-			cur_state[1] = true;
+			cur_state[PIT] = true;
 			jump_hesitation = 0;
 		}
 
@@ -447,7 +454,7 @@ public class ExMarioAgent implements AgentInterface {
 		for (int right = 0; !is_pipe && right<3; right++) {
 			char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
 			if (tile == '|')
-				cur_state[2] = true;
+				cur_state[PIPE] = true;
 				// always jump if there is a pit
 				jump_hesitation = 0;
 				break;
@@ -470,7 +477,7 @@ public class ExMarioAgent implements AgentInterface {
 				 */
 				jump_hesitation *= (dx+2)/12;
 				monster_near = true;
-				cur_state[0] = true;
+				cur_state[MONSTER] = true;
 			}
 		}
 
