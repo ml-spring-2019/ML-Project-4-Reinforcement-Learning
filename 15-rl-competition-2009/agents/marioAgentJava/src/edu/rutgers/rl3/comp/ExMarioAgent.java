@@ -34,19 +34,6 @@ import java.util.Hashtable;
  */
 public class ExMarioAgent implements AgentInterface {
 
-/*
-0: touch m.types = 1,2,4,5,8
-1: Touch m.types = 6,7
-2: Jump over barrier
-3: Hit non-brick block
-4: Jump over m.types = 1,2,4,5,8
-5: Killing m.types
-6: touch coins
-7: moving forward
-8: moving backward
-*/
-	public Hashtable<Integer, Integer> actionValueFunction = new Hashtable<Integer, Integer>();
-
 	private int NUMBER_OF_STATES = 6;
 	private int NUMBER_OF_ACTIONS = 5;
 
@@ -54,7 +41,6 @@ public class ExMarioAgent implements AgentInterface {
 	private double total_reward;
 	private double episode_reward;
 	private int episode_num;
-
 
 	private PrintWriter debug_out;
 
@@ -76,7 +62,6 @@ public class ExMarioAgent implements AgentInterface {
 	            state_rewards[i][j] = 0;
 	        }
 	    }
-
 	}
 
 	/*
@@ -271,7 +256,6 @@ public class ExMarioAgent implements AgentInterface {
         total_reward = 0;
         episode_num = 0;
 
-
         try {
             debug_out = new PrintWriter("debug_log.json", "UTF-8");
         } catch (Exception e){
@@ -292,13 +276,13 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public Action agent_start(Observation o) {
-		Monster mario = ExMarioAgent.getMario(o);
 		ArrayList episode = new ArrayList();
 		episode_num++;
 		episode_reward = 0;
 
 		trial_start = new Date().getTime();
 		step_number = 0;
+		debug_out.println("begin");
 		if (episode_num != 1){
 		debug_out.println(",");
 		}
@@ -325,7 +309,7 @@ public class ExMarioAgent implements AgentInterface {
 
 		step_number++;
 		total_steps++;
-
+		// transition function
 		total_reward += r;
 		episode_reward += r;
 
@@ -355,6 +339,8 @@ public class ExMarioAgent implements AgentInterface {
 			last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
 
+		//
+
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
@@ -382,8 +368,10 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 // States: tiles
-
+// states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
+//	The current state
+		Boolean[] cur_state = new Boolean [] {false, false, false, false, false, false};
 
 		if (last_actions.size() > step_number) {
 			Action act = last_actions.get(step_number);
@@ -412,16 +400,21 @@ public class ExMarioAgent implements AgentInterface {
 		for (int up=0; up<5; up++) {
 			for (int right = 0; right<7; right++) {
 				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
-				if (tile == '$') {
-					// jump often if there is a coin
-					jump_hesitation *= .7;
-				}
-				else if (tile == ' ' || tile == 'M' || tile == '\0') {
-					// don't worry if it is blank space
-				}
-				else {
+
+				if (tile == 'b') {
+					cur_state[3] = true;
 					// tend to jump more if there is a block closer
 					jump_hesitation *= 1.0*right/7;
+				}
+				else if (tile == '?') {
+					cur_state[4] = true;
+					// tend to jump more if there is a block closer
+					jump_hesitation *= 1.0*right/7;
+				}
+				else if (tile == '$') {
+					cur_state[5] = true;
+					// jump often if there is a coin
+					jump_hesitation *= .7;
 				}
 			}
 		}
@@ -440,9 +433,24 @@ public class ExMarioAgent implements AgentInterface {
 			if (pit_col)
 				is_pit = true;
 		}
+
 		if (is_pit) {
 			// always jump if there is a pit
+			cur_state[1] = true;
 			jump_hesitation = 0;
+		}
+
+		/*
+		 * Search for a pit in front of mario.
+		 */
+		boolean is_pipe = false;
+		for (int right = 0; !is_pipe && right<3; right++) {
+			char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
+			if (tile == '|')
+				cur_state[2] = true;
+				// always jump if there is a pit
+				jump_hesitation = 0;
+				break;
 		}
 
 		/*
@@ -462,6 +470,7 @@ public class ExMarioAgent implements AgentInterface {
 				 */
 				jump_hesitation *= (dx+2)/12;
 				monster_near = true;
+				cur_state[0] = true;
 			}
 		}
 
@@ -495,6 +504,16 @@ public class ExMarioAgent implements AgentInterface {
 
 		// 0, 1 for speed
 		act.intArray[2] = (is_pit||!monster_near)?1:0;//rand.nextBoolean()?1:0;
+
+/*
+//	print out the current state
+		for (Boolean b : cur_state) {
+			if (b == true)
+				debug_out.println("t");
+			else
+				debug_out.println("f");
+		}
+*/
 
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
