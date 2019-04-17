@@ -378,7 +378,7 @@ public class ExMarioAgent implements AgentInterface {
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
 //	The current state
-		Boolean[] cur_state = new Boolean [] {false, false, false, false, false, false};
+		Boolean[] cur_state = new Boolean [] {false, false, false, false, false, false, false, false};
 
 		if (last_actions.size() > step_number) {
 			Action act = last_actions.get(step_number);
@@ -532,21 +532,15 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"jump_rng\": " + jump_rng + ",");
-		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation);
-
-//		System.out.println("WALKING: ");
-//		System.out.println("\tdirection_looking: " + act.intArray[0] );
-//		System.out.println("\twalk_hesitating: " + walk_hesitating);
-//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-//		System.out.println("SPEED: ");
-//		System.out.println("\tspeed: " + act.intArray[2]);
-//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
-//		System.out.println("\tmonster_near: " + (monster_near ? "true" : "false"));
-//		System.out.println("JUMPING: ");
-//		System.out.println("\twill_jump: " + (act.intArray[1] == 1 ? "true" : "false"));
-//		System.out.println("\tjump_rng: " + jump_rng);
-//		System.out.println("\tjump_hesitation: " + jump_hesitation);
-//		System.out.println("\tis_pit: " + (is_pit ? "true" : "false"));
+		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation + ",");
+		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+		debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD]);
 
 		return act;
 	}
