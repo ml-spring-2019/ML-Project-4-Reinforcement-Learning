@@ -261,13 +261,6 @@ public class ExMarioAgent implements AgentInterface {
 		 return firstDigit + secondDigit + thirdDigit;
 	}
 
-	int[] convertBackToAction(int code){
-		 int direction = ((code - (code % 100)) / 100) - 1;
-		 int jump = ((code % 100) - (code % 10)) / 10;
-		 int speed = (code % 10);
-		 return new int[]{direction, jump, speed};
-	}
-
 	ExMarioAgent() {
 		// initialize variables
 		num_of_times_states_visited = new int[(int)Math.pow(2, NUMBER_OF_STATES)];
@@ -289,6 +282,7 @@ public class ExMarioAgent implements AgentInterface {
 					}
 			 }
 		}
+
 		initializeStateRewards();
 
 	    actionNum = 0;
@@ -330,14 +324,13 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t{");
 		debug_out.println("\t\t\"episode\": " + episode_num + ",");
 		debug_out.println("\t\t\"steps\":[");
+
 		debug_out.println("\t\t{");
         debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
 		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
-
 		Action a = getAction(o);
-
 		debug_out.println("\t\t\t}");
         debug_out.print("\t\t}");
 		episode_num++;
@@ -355,18 +348,20 @@ public class ExMarioAgent implements AgentInterface {
 
 
 		debug_out.println("\t\t{");
+
 		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
 		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
 		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
 
-        Action a = getAction(o);
+    Action a = getAction(o);
 		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
 
-        debug_out.println("\t\t\t},");
-        debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
-        debug_out.print("\t\t}");
+    debug_out.println("\t\t\t},");
+		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
+		debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+    debug_out.print("\t\t}");
 
 		return a;
 	}
@@ -389,22 +384,27 @@ public class ExMarioAgent implements AgentInterface {
 
 			state_vector.clear();
 			action_vector.clear();
-
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
 //		    System.out.println("last_actions: " + last_actions.nextElement());
 //		}
 
+
+//		System.out.println("ended after "+total_steps+" total steps");
+//		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
+
         debug_out.println("\n\t\t],");
-        debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
-        debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
+				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+				debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
         debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
         debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
         debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
         debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
         debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
         debug_out.print("\t}");
+
+
 	}
 
 	public String agent_message(String msg) {
@@ -420,12 +420,30 @@ public class ExMarioAgent implements AgentInterface {
 	private static final int BONUS_ITEM = 5;
 	private static final int WIN = 6;
 	private static final int DEAD = 7;
+	private static final int SOFT_POLICY = 4;
+
+	int[] convertBackToAction(int code){
+		 int direction = ((code - (code % 100)) / 100) - 1;
+		 int jump = ((code % 100) - (code % 10)) / 10;
+		 int speed = (code % 10);
+		 return new int[]{direction, jump, speed};
+	}
+
 // States: tiles
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
-//	The current state
+		actionNum++;
+		double jump_hesitation;
+		double walk_hesitation;
+		int speedRand;
+		Random rand_ = new Random();
+		int explorationProb = rand_.nextInt(SOFT_POLICY);
+
+		//	The current state
 		for (int state = 0; state < cur_state.length; state++)
 			cur_state[state] = false;
+
+
 
 		if (last_actions.size() > step_number) {
 			Action act = last_actions.get(step_number);
@@ -436,154 +454,104 @@ public class ExMarioAgent implements AgentInterface {
 			debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false));
 			return act;
 		}
+		Action act = new Action(3, 0);
+		if (explorationProb != 0) {
+			Monster mario = ExMarioAgent.getMario(o);
+			Monster[] monsters = ExMarioAgent.getMonsters(o);
 
-	    actionNum++;
-		Monster mario = ExMarioAgent.getMario(o);
-		Monster[] monsters = ExMarioAgent.getMonsters(o);
+			// if mario finishes the level
+			if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!')
+				cur_state[WIN] = true;
 
-		/*
-		 * sometimes jump for no reason at all. at the end of this function,
-		 * the value of this variable will be compared against a random number
-		 * to see if mario jumps
-		 */
-		double jump_hesitation = .95;
-
-		// if mario finishes the level
-		if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!')
-			cur_state[WIN] = true;
-
-		/*
-		 * Check the blocks in the area to mario's upper right
-		 */
-		for (int up=0; up<5; up++) {
-			for (int right = 0; right<7; right++) {
-				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
-
-				if (tile == 'b') {
-					cur_state[BREAKABLE_BLOCK] = true;
-					// tend to jump more if there is a block closer
-					jump_hesitation *= 1.0*right/7;
-				}
-				else if (tile == '?') {
-					cur_state[QUESTION_BLOCK] = true;
-					// tend to jump more if there is a block closer
-					jump_hesitation *= 1.0*right/7;
-				}
-				else if (tile == '$') {
-					cur_state[BONUS_ITEM] = true;
-					// jump often if there is a coin
-					jump_hesitation *= .7;
+			/*
+			 * Check the blocks in the area to mario's upper right
+			 */
+			for (int up=0; up<5; up++) {
+				for (int right = 0; right<5  ; right++) {
+					char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
+					if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
+					else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
+					else if (tile == '$') cur_state[BONUS_ITEM] = true;
 				}
 			}
-		}
 
-		/*
-		 * Search for a pit in front of mario.
-		 */
-		boolean is_pit = false;
-		for (int right = 0; !is_pit && right<3; right++) {
-			boolean pit_col = true;
-			for (int down=0; pit_col && mario.y-down>=0; down++) {
-				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
-				if (tile != ' ' && tile != 'M' && tile != '\0')
-					pit_col = false;
+			/*
+			 * Search for a pit in front of mario.
+			*/
+			boolean is_pit = false;
+			for (int right = 0; !is_pit && right<5; right++) {
+				boolean pit_col = true;
+				for (int down=0; pit_col && mario.y-down>=0; down++) {
+					char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
+					if (tile != ' ' && tile != 'M' && tile != '\0')
+						pit_col = false;
+				}
+				if (pit_col)
+					is_pit = true;
 			}
-			if (pit_col)
-				is_pit = true;
-		}
 
-		if (is_pit) {
-			// always jump if there is a pit
-			cur_state[PIT] = true;
-			jump_hesitation = 0;
-		}
+			if (is_pit)
+				cur_state[PIT] = true;
 
-		/*
-		 * Search for a pit in front of mario.
-		 */
-		boolean is_pipe = false;
-		for (int right = 0; !is_pipe && right<3; right++) {
-			char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
-			if (tile == '|')
-				cur_state[PIPE] = true;
-				// always jump if there is a pit
-				jump_hesitation = 0;
-				break;
-		}
-
-		/*
-		 * Look for nearby monsters by checking the positions against mario's
-		 */
-		boolean monster_near = false;
-		for (Monster m : monsters) {
-			if (m.type == 0 || m.type == 10 || m.type == 11) {
-				// m is mario
-				continue;
+			/*
+			 * Search for a pit in front of mario.
+			 */
+			boolean is_pipe = false;
+			for (int right = 0; !is_pipe && right<3; right++) {
+				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
+				if (tile == '|')
+					cur_state[PIPE] = true;
+					break;
 			}
-			double dx = m.x-mario.x;
-			double dy = m.y-mario.y;
-			if (dx > -1 && dx < 10 && dy > -4 && dy < 4) {
-				/* the more monsters and the closer they are, the more likely
-				 * mario is to jump.
-				 */
-				jump_hesitation *= (dx+2)/12;
-				monster_near = true;
-				cur_state[MONSTER] = true;
+
+			/*
+			 * Look for nearby monsters by checking the positions against mario's
+			 */
+			for (Monster m : monsters) {
+				if (m.type == 0 || m.type == 10 || m.type == 11) {
+					// m is mario
+					continue;
+				}
+				double dx = m.x-mario.x;
+				double dy = m.y-mario.y;
+				if (dx > -1 && dx < 10 && dy > -4 && dy < 4) {
+					/* the more monsters and the closer they are, the more likely
+					 * mario is to jump.
+					 */
+					cur_state[MONSTER] = true;
+				}
 			}
+
+			int biggest_value = -99;
+			int biggest_value_itr = 0;
+			for (int itr = 0; itr < policy_table[getIndexOfReward(cur_state)].length; itr++) {
+				if (policy_table[getIndexOfReward(cur_state)][itr] > biggest_value) {
+					biggest_value_itr = itr;
+					biggest_value = policy_table[getIndexOfReward(cur_state)][itr];
+				}
+			}
+			int[] cur_action = convertBackToAction(biggest_value_itr);
+			act.intArray = cur_action;
 		}
 
-		// hold down the jump button while in the air sometimes, to jump higher
-		if (mario.sy > .1)
-			jump_hesitation *= .5;
-
-		// Sometimes hesitate if there is a monster near.
-		if (walk_hesitating) {
-			if (!monster_near || rand.nextDouble() > .8)
-				walk_hesitating = false;
-			else if (rand.nextDouble() > .9)
-				walk_hesitating = false;
+		else {
+			Random rand = new Random();
+			walk_hesitation = Math.random();
+			jump_hesitation = Math.random();
+			act.intArray[0] = Math.random()>walk_hesitation?0:1;
+			act.intArray[1] = Math.random()>jump_hesitation?1:0;
+			act.intArray[2] = rand.nextInt(2);
 		}
-		else if (monster_near && rand.nextDouble() > .8) {
-			walk_hesitating = true;
-		}
-		// sometimes hesitate even if there isn't one
-		else if (rand.nextDouble() > .9)
-			walk_hesitating = true;
-
-		Action act = new Action(8, 0);
 
 		num_of_times_states_visited[getIndexOfReward(cur_state)]++;
-/*
-		// -1, 0, 1 for direction, 1 is to the right
-		act.intArray[0] = walk_hesitating?0:1;
-
-		// 0, 1 for jump
-		double jump_rng = rand.nextDouble();
-		act.intArray[1] = jump_rng>jump_hesitation?1:0;
-
-		// 0, 1 for speed
-		act.intArray[2] = (is_pit||!monster_near)?1:0;//rand.nextBoolean()?1:0;
-
-
-        //	print out the current state
-                for (Boolean b : cur_state) {
-                    if (b == true)
-                        debug_out.println("t");
-                    else
-                        debug_out.println("f");
-                }
-        */
 
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
 		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
+
 		debug_out.println("\t\t\t\t\"will_jump\": " + act.intArray[1] + ",");
-        debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
-		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
-		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
-		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation + ",");
+		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
