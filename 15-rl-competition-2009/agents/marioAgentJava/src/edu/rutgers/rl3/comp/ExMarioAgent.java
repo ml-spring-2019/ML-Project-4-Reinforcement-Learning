@@ -35,7 +35,7 @@ import java.util.Hashtable;
 public class ExMarioAgent implements AgentInterface {
 
 	private int NUMBER_OF_STATES = 8;
-	private int NUMBER_OF_ACTIONS = 8;
+	private int NUMBER_OF_ACTIONS = 10;
 /*
 	States, Actions, Rewards
 */
@@ -46,6 +46,8 @@ public class ExMarioAgent implements AgentInterface {
 	private double total_reward;
 	private double episode_reward;
 	private int episode_num;
+
+	Map<Integer, Integer> findActionCol;
 
 	private PrintWriter debug_out;
 
@@ -250,6 +252,13 @@ public class ExMarioAgent implements AgentInterface {
 
 	int actionNum;
 
+	int convertForFindActionCol(int direction, int jump, int speed){
+		 int firstDigit = (direction + 1) * 100;
+		 int secondDigit = jump * 10;
+		 int thirdDigit = speed;
+		 return firstDigit + secondDigit + thirdDigit;
+	}
+
 	ExMarioAgent() {
 		state_vector = new ArrayList<Integer>();
 		action_vector = new ArrayList<Integer>();
@@ -258,6 +267,30 @@ public class ExMarioAgent implements AgentInterface {
 		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
+
+		findActionCol = new Hashtable<Integer, Integer>();
+
+		int counter = 0;
+		for (int dir = -1; dir < 2; dir++){
+			 for (int jum = 0; jum < 2; jum++){
+				 	for (int spe = 0; spe < 2; spe++){
+						findActionCol.put(convertForFindActionCol(dir, jum, spe), counter);
+						counter++;
+					}
+			 }
+		}
+
+		//
+		// findActionCol.put(convertForFindActionCol(1, 0, 1), 1);
+		// findActionCol.put(convertForFindActionCol(-1, 0, 0), 2);
+		// findActionCol.put(convertForFindActionCol(-1, 0, 1), 3);
+		// findActionCol.put(convertForFindActionCol(1, 1, 0), 4);
+		// findActionCol.put(convertForFindActionCol(-1, 1, 0), 5);
+		// findActionCol.put(convertForFindActionCol(0, 1, 0), 6);
+		// findActionCol.put(convertForFindActionCol(0, 0, 0), 7);
+		// findActionCol.put(convertForFindActionCol(1, 1, 1), 8);
+		// findActionCol.put(convertForFindActionCol(-1, 1, 1), 9);
+
 		initializeStateRewards();
 
 //        boolean[] t = new boolean[]{true, false, true, false, true, false};
@@ -332,9 +365,13 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
 
-        Action a = getAction(o);
-        debug_out.println("\t\t\t}");
-        debug_out.print("\t\t}");
+    Action a = getAction(o);
+		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+
+    debug_out.println("\t\t\t},");
+		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
+		debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+    debug_out.print("\t\t}");
 
 		return a;
 	}
@@ -544,8 +581,9 @@ public class ExMarioAgent implements AgentInterface {
 		this_actions.add(act);
 
 		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-		debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false) + ",");
+
+		debug_out.println("\t\t\t\t\"will_jump\": " + act.intArray[1] + ",");
+debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
 		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
 		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
