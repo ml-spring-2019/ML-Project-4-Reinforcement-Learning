@@ -284,90 +284,70 @@ public class ExMarioAgent implements AgentInterface {
 		}
 
 		initializeStateRewards();
-
-	    actionNum = 0;
-        total_reward = 0;
-        episode_num = 0;
-
         try {
             debug_out = new PrintWriter("debug_log.json", "UTF-8");
         } catch (Exception e){
-            System.out.println("File not found.");
+            System.out.println("IO Error.");
             return;
         }
-        debug_out.println("{\n\t\"episodes\":[");
+        constructorDebugOut();
 	}
 
 	public void agent_init(String task) {
 		total_steps = 0;
+		actionNum = 0;
+        total_reward = 0;
+        episode_num = 0;
 	}
 
 	public void agent_cleanup() {
-	    debug_out.println("\n]}");
+	    cleanupDebugOut();
         debug_out.close();
+
+
+
+
         System.out.println("Check debug_log.json for output.");
 	}
 
 	public Action agent_start(Observation o) {
 		ArrayList episode = new ArrayList();
-		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
+
+		for (int itr = 0; itr < num_of_times_states_visited.length; itr++){
 			num_of_times_states_visited[itr] = 0;
+        }
+
 		episode_reward = 0;
+		step_number = 0;
 
 		trial_start = new Date().getTime();
-		step_number = 0;
-		if (episode_num != 1){
-		debug_out.println(",");
-		}
 
-
-		debug_out.println("\t{");
-		debug_out.println("\t\t\"episode\": " + episode_num + ",");
-		debug_out.println("\t\t\"steps\":[");
-
-		debug_out.println("\t\t{");
-        debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
-		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
-		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
-		debug_out.println("\t\t\t\"actions_to_perform\": {");
+        agentStartDebugOutBeforeAction();
 		Action a = getAction(o);
-		debug_out.println("\t\t\t}");
-        debug_out.print("\t\t}");
+		agentStartDebugOutAfterAction();
+
 		episode_num++;
 		return a;
 	}
 
 	public Action agent_step(double r, Observation o) {
-        debug_out.println(",");
-
 		step_number++;
 		total_steps++;
-		// transition function
 		total_reward += r;
 		episode_reward += r;
 
+		agentStepDebugOutStart(r);
 
-		debug_out.println("\t\t{");
-
-		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
-		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
-		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
-		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
-		debug_out.println("\t\t\t\"actions_to_perform\": {");
-
-    Action a = getAction(o);
+        Action a = getAction(o);
 		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
 
-    debug_out.println("\t\t\t},");
-		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
-		debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
-    debug_out.print("\t\t}");
+        agentStepDebugOutEnd(a);
 
 		return a;
 	}
 
 	public void agent_end(double r) {
-		long time_passed = new Date().getTime()-trial_start;
+
 		if (this_actions.size() > 7) {
 			last_actions = this_actions;
 			last_actions.setSize(last_actions.size()-7);
@@ -382,29 +362,11 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
 			num_of_times_states_visited[itr] = 0;
 
-			state_vector.clear();
-			action_vector.clear();
-//		Enumeration e = last_actions.elements();
+        state_vector.clear();
+        action_vector.clear();
 
-//		while (last_actions.hasMoreElements()){
-//		    System.out.println("last_actions: " + last_actions.nextElement());
-//		}
-
-
-//		System.out.println("ended after "+total_steps+" total steps");
-//		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
-
-        debug_out.println("\n\t\t],");
-				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
-				debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
-        debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
-        debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
-        debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
-        debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
-        debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
+        agentEndDebugOut();
         debug_out.print("\t}");
-
-
 	}
 
 	public String agent_message(String msg) {
@@ -449,11 +411,10 @@ public class ExMarioAgent implements AgentInterface {
 			Action act = last_actions.get(step_number);
 			this_actions.add(act);
 
-			debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-			debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-			debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false));
+			getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
 			return act;
 		}
+
 		Action act = new Action(3, 0);
 		if (explorationProb != 0) {
 			Monster mario = ExMarioAgent.getMario(o);
@@ -548,19 +509,86 @@ public class ExMarioAgent implements AgentInterface {
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
-		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-
-		debug_out.println("\t\t\t\t\"will_jump\": " + act.intArray[1] + ",");
-		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
-
+		getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
 		return act;
 	}
+
+	private void constructorDebugOut(){
+	    debug_out.println("{\n\t\"episodes\":[");
+	}
+
+	private void agentStartDebugOutBeforeAction(){
+	    if (episode_num != 0){
+		    debug_out.println(",");
+		}
+	    debug_out.println(indent(1) + "{");
+		debug_out.println(indent(2) + "\"episode\": " + episode_num + ",");
+		debug_out.println(indent(2) + "\"steps\":[");
+		debug_out.println(indent(2) + "{");
+        debug_out.println(indent(3) + "\"step_number\": " + step_number + ",");
+		debug_out.println(indent(3) + "\"total_steps\": " + total_steps+ ",");
+		debug_out.println(indent(3) + "\"total_reward\": " + total_reward + ",");
+		debug_out.println(indent(3) + "\"actions_to_perform\": {");
+	}
+
+	private void agentStartDebugOutAfterAction(){
+	    debug_out.println("\t\t\t}");
+        debug_out.print("\t\t}");
+	}
+
+	private void getActionDebugOut(Boolean truncated_action, int explorationProb, Action act){
+        debug_out.println(indent(4) + "\"last_actions.size() > step_number\": " + truncated_action + ",");
+        debug_out.println(indent(4) + "\"explorationProb\": " + explorationProb + ",");
+        debug_out.println(indent(4) + "\"a.intArray[0]\": " + act.intArray[0] + ",");
+        debug_out.println(indent(4) + "\"a.intArray[1]\": " + act.intArray[1] + ",");
+        debug_out.println(indent(4) + "\"a.intArray[2]\": " + act.intArray[2] + ",");
+        debug_out.println(indent(4) + "\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
+        debug_out.println(indent(4) + "\"cur_state[PIT]\": " + cur_state[PIT] + ",");
+        debug_out.println(indent(4) + "\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
+        debug_out.println(indent(4) + "\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
+        debug_out.println(indent(4) + "\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
+        debug_out.println(indent(4) + "\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
+	}
+
+	private void agentStepDebugOutStart(double r){
+	    debug_out.println(",\n" + indent(2) + "{");
+	    debug_out.println(indent(3) + "\"step_number\": " + step_number + ",");
+		debug_out.println(indent(3) + "\"delta_reward\": " + r + ",");
+		debug_out.println(indent(3) + "\"episode_reward\": " + episode_reward + ",");
+		debug_out.println(indent(3) + "\"total_reward\": " + total_reward + ",");
+		debug_out.println(indent(3) + "\"actions_to_perform\": {");
+	}
+
+	private void agentStepDebugOutEnd(Action a){
+	    debug_out.println(indent(3) + "},");
+		debug_out.println(indent(3) + "\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+        debug_out.print(indent(2) + "}");
+	}
+
+	private void agentEndDebugOut(){
+	    long time_passed = new Date().getTime()-trial_start;
+	    debug_out.println("\n\t\t],");
+        debug_out.println(indent(2) + "\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+        debug_out.println(indent(2) + "\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
+        debug_out.println(indent(2) + "\"episode_reward\": " + episode_reward + ",");
+        debug_out.println(indent(2) + "\"total_reward\": " + total_reward+ ",");
+        debug_out.println(indent(2) + "\"episode_steps\": " + step_number + ",");
+        debug_out.println(indent(2) + "\"total_steps\": " + total_steps + ",");
+        debug_out.println(indent(2) + "\"steps_per_second\": " + (1000.0 * step_number / time_passed));
+	}
+
+	private void cleanupDebugOut(){
+	    debug_out.println("\n]}");
+	}
+
+	private String indent(int numOfTabsToAdd){
+	    String result = "";
+	    for (int i = 0; i < numOfTabsToAdd; i++){
+	        result += "\t";
+	    }
+	    return result;
+	}
+
 
 	public static void main(String[] args) {
 		new AgentLoader(new ExMarioAgent()).run();
