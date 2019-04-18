@@ -34,10 +34,15 @@ import java.util.Hashtable;
  */
 public class ExMarioAgent implements AgentInterface {
 
-	private int NUMBER_OF_STATES = 6;
-	private int NUMBER_OF_ACTIONS = 5;
-
-	private int[][] state_rewards;
+	private int NUMBER_OF_STATES = 8;
+	private int NUMBER_OF_ACTIONS = 8;
+/*
+	States, Actions, Rewards
+*/
+	private ArrayList<Integer> state_vector;
+	private ArrayList<Integer> action_vector;
+	private ArrayList<Double> reward_vector;
+	private int[][] policy_table;
 	private double total_reward;
 	private double episode_reward;
 	private int episode_num;
@@ -58,10 +63,10 @@ public class ExMarioAgent implements AgentInterface {
 	private void initializeStateRewards(){
 	    int rows = (int) Math.pow(2, NUMBER_OF_STATES);
 	    int cols = NUMBER_OF_ACTIONS;
-	    state_rewards = new int[rows][NUMBER_OF_ACTIONS];
+	    policy_table = new int[rows][NUMBER_OF_ACTIONS];
 	    for (int i = 0; i < rows; i++){
 	        for (int j = 0; j < cols; j++){
-	            state_rewards[i][j] = 0;
+	            policy_table[i][j] = 0;
 	        }
 	    }
 	}
@@ -246,6 +251,9 @@ public class ExMarioAgent implements AgentInterface {
 	int actionNum;
 
 	ExMarioAgent() {
+		state_vector = new ArrayList<Integer>();
+		action_vector = new ArrayList<Integer>();
+		reward_vector = new ArrayList<Double>();
 		cur_state = new Boolean[8];
 		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
