@@ -35,13 +35,14 @@ import java.util.Hashtable;
 public class ExMarioAgent implements AgentInterface {
 
 	private int NUMBER_OF_STATES = 8;
-	private int NUMBER_OF_ACTIONS = 10;
+	private int NUMBER_OF_ACTIONS = 12;
 /*
 	States, Actions, Rewards
 */
 	private ArrayList<Integer> state_vector;
 	private ArrayList<Integer> action_vector;
 	private ArrayList<Double> reward_vector;
+	private int[] num_of_times_states_visited;
 	private int[][] policy_table;
 	private double total_reward;
 	private double episode_reward;
@@ -53,7 +54,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	private Boolean[] cur_state;
 
-	private int getIndexOfReward(boolean[] states){
+	private int getIndexOfReward(Boolean[] states){
         String gen_string = "";
         for (boolean s : states){
             gen_string += s ? "1" : "0";
@@ -95,6 +96,7 @@ public class ExMarioAgent implements AgentInterface {
 	 * @param obs
 	 * @return
 	 */
+
 	public static char getTileAt(double xf, double yf, Observation obs) {
 		int x = (int)xf;
 		if (x<0)
@@ -260,15 +262,16 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	ExMarioAgent() {
+		// initialize variables
+		num_of_times_states_visited = new int[(int)Math.pow(2, NUMBER_OF_STATES)];
+		findActionCol = new Hashtable<Integer, Integer>();
+		rand = new Random(new java.util.Date().getTime());
 		state_vector = new ArrayList<Integer>();
 		action_vector = new ArrayList<Integer>();
 		reward_vector = new ArrayList<Double>();
-		cur_state = new Boolean[8];
-		rand = new Random(new java.util.Date().getTime());
 		last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
-
-		findActionCol = new Hashtable<Integer, Integer>();
+		cur_state = new Boolean[8];
 
 		int counter = 0;
 		for (int dir = -1; dir < 2; dir++){
@@ -280,21 +283,7 @@ public class ExMarioAgent implements AgentInterface {
 			 }
 		}
 
-		//
-		// findActionCol.put(convertForFindActionCol(1, 0, 1), 1);
-		// findActionCol.put(convertForFindActionCol(-1, 0, 0), 2);
-		// findActionCol.put(convertForFindActionCol(-1, 0, 1), 3);
-		// findActionCol.put(convertForFindActionCol(1, 1, 0), 4);
-		// findActionCol.put(convertForFindActionCol(-1, 1, 0), 5);
-		// findActionCol.put(convertForFindActionCol(0, 1, 0), 6);
-		// findActionCol.put(convertForFindActionCol(0, 0, 0), 7);
-		// findActionCol.put(convertForFindActionCol(1, 1, 1), 8);
-		// findActionCol.put(convertForFindActionCol(-1, 1, 1), 9);
-
 		initializeStateRewards();
-
-//        boolean[] t = new boolean[]{true, false, true, false, true, false};
-//		System.out.println("Index of reward test: " + getIndexOfReward(t));
 
 	    actionNum = 0;
         total_reward = 0;
@@ -321,7 +310,8 @@ public class ExMarioAgent implements AgentInterface {
 
 	public Action agent_start(Observation o) {
 		ArrayList episode = new ArrayList();
-
+		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
+			num_of_times_states_visited[itr] = 0;
 		episode_reward = 0;
 
 		trial_start = new Date().getTime();
@@ -388,6 +378,12 @@ public class ExMarioAgent implements AgentInterface {
 
 		if (cur_state[WIN] == false)
 			cur_state[DEAD] = true;
+
+		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
+			num_of_times_states_visited[itr] = 0;
+
+			state_vector.clear();
+			action_vector.clear();
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
@@ -556,7 +552,8 @@ public class ExMarioAgent implements AgentInterface {
 
 		Action act = new Action(8, 0);
 
-
+		num_of_times_states_visited[getIndexOfReward(cur_state)]++;
+/*
 		// -1, 0, 1 for direction, 1 is to the right
 		act.intArray[0] = walk_hesitating?0:1;
 
@@ -567,7 +564,7 @@ public class ExMarioAgent implements AgentInterface {
 		// 0, 1 for speed
 		act.intArray[2] = (is_pit||!monster_near)?1:0;//rand.nextBoolean()?1:0;
 
-/*
+
 //	print out the current state
 		for (Boolean b : cur_state) {
 			if (b == true)
@@ -587,7 +584,7 @@ debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
 		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
 		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
-		debug_out.println("\t\t\t\t\"jump_rng\": " + jump_rng + ",");
+//		debug_out.println("\t\t\t\t\"jump_rng\": " + jump_rng + ",");
 		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation + ",");
 		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
