@@ -287,7 +287,7 @@ public class ExMarioAgent implements AgentInterface {
         try {
             debug_out = new PrintWriter("debug_log.json", "UTF-8");
         } catch (Exception e){
-            System.out.println("IO Error.");
+            System.out.println("IO Error debugging.");
             return;
         }
         constructorDebugOut();
@@ -298,14 +298,38 @@ public class ExMarioAgent implements AgentInterface {
 		actionNum = 0;
         total_reward = 0;
         episode_num = 0;
+
+        testExport();
+
+	}
+
+	private void testExport(){
+	    state_vector.add(1);
+	    state_vector.add(2);
+	    state_vector.add(3);
+	    state_vector.add(4);
+	    state_vector.add(5);
+
+	    action_vector.add(6);
+	    action_vector.add(7);
+	    action_vector.add(8);
+	    action_vector.add(9);
+	    action_vector.add(0);
+
+	    reward_vector.add(1.2);
+	    reward_vector.add(3.4);
+	    reward_vector.add(5.6);
+	    reward_vector.add(7.8);
+	    reward_vector.add(9.0);
+
+	    exportTablesToFile();
 	}
 
 	public void agent_cleanup() {
 	    cleanupDebugOut();
         debug_out.close();
 
-
-
+        testExport();
 
         System.out.println("Check debug_log.json for output.");
 	}
@@ -589,8 +613,159 @@ public class ExMarioAgent implements AgentInterface {
 	    return result;
 	}
 
+	private void exportTablesToFile(){
+	    System.out.println("Exporting vectors and tables to file.");
+
+        PrintWriter export = null;
+        try {
+            export = new PrintWriter("ref_export.json", "UTF-8");
+        } catch (Exception e){
+            System.out.println("IO Error exporting.");
+            return;
+        }
+        export.println(indent(0) + "{");
+
+        // Export state_vector
+        Boolean notBeginning = false;
+        export.println(indent(1) + "state_vector:");
+        export.println(indent(1) + "[");
+        for (int sv_i : state_vector){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + sv_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+
+        // Export action_vector
+        notBeginning = false;
+        export.println(indent(1) + "action_vector:");
+        export.println(indent(1) + "[");
+        for (int av_i : action_vector){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + av_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+
+        // Export reward_vector
+        notBeginning = false;
+        export.println(indent(1) + "reward_vector:");
+        export.println(indent(1) + "[");
+        for (double rw_i : reward_vector){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + rw_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+
+        // Export num_of_times_states_visited
+        notBeginning = false;
+        export.println(indent(1) + "num_of_times_states_visited:");
+        export.println(indent(1) + "[");
+        for (double sv_i : num_of_times_states_visited){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + sv_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+
+        // Export policy_table
+        notBeginning = false;
+        export.println(indent(1) + "policy_table:");
+        export.println(indent(1) + "[");
+        Boolean notBeginning2;
+        for (int[] pt_i : policy_table){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + "[");
+            notBeginning2 = false;
+            for (int pt_j : pt_i){
+                if (notBeginning2){
+                    export.print(", ");
+                }
+                export.print(pt_j);
+                notBeginning2 = true;
+            }
+            export.print("]");
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+
+
+        export.println(indent(0) + "}");
+        export.close();
+	}
+
+	//	private ArrayList<Integer> state_vector;
+//	private ArrayList<Integer> action_vector;
+//	private ArrayList<Double> reward_vector;
+//	private int[] num_of_times_states_visited;
+//	private int[][] policy_table;
+
+
 
 	public static void main(String[] args) {
 		new AgentLoader(new ExMarioAgent()).run();
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
