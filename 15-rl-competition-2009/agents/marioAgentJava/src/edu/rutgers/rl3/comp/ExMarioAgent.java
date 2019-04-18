@@ -9,6 +9,8 @@ import org.rlcommunity.rlglue.codec.types.Action;
 import org.rlcommunity.rlglue.codec.types.Observation;
 import org.rlcommunity.rlglue.codec.util.AgentLoader;
 
+import org.json.*;
+
 import java.util.Date;
 import java.util.Vector;
 import java.util.Random;
@@ -36,6 +38,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	private int NUMBER_OF_STATES = 8;
 	private int NUMBER_OF_ACTIONS = 12;
+	private final String export_filename = "ref_export.json";
 /*
 	States, Actions, Rewards
 */
@@ -291,6 +294,7 @@ public class ExMarioAgent implements AgentInterface {
             return;
         }
         constructorDebugOut();
+        importTablesFromFile();
 	}
 
 	public void agent_init(String task) {
@@ -298,39 +302,12 @@ public class ExMarioAgent implements AgentInterface {
 		actionNum = 0;
         total_reward = 0;
         episode_num = 0;
-
-        testExport();
-
-	}
-
-	private void testExport(){
-	    state_vector.add(1);
-	    state_vector.add(2);
-	    state_vector.add(3);
-	    state_vector.add(4);
-	    state_vector.add(5);
-
-	    action_vector.add(6);
-	    action_vector.add(7);
-	    action_vector.add(8);
-	    action_vector.add(9);
-	    action_vector.add(0);
-
-	    reward_vector.add(1.2);
-	    reward_vector.add(3.4);
-	    reward_vector.add(5.6);
-	    reward_vector.add(7.8);
-	    reward_vector.add(9.0);
-
-	    exportTablesToFile();
 	}
 
 	public void agent_cleanup() {
 	    cleanupDebugOut();
         debug_out.close();
-
-        testExport();
-
+        exportTablesToFile();
         System.out.println("Check debug_log.json for output.");
 	}
 
@@ -613,10 +590,66 @@ public class ExMarioAgent implements AgentInterface {
 	    return result;
 	}
 
+	private void importTablesFromFile(){
+	    Scanner s = null;
+
+        try{
+            s = new Scanner(new File(export_filename));
+	    } catch (Exception e){
+	        System.out.println("File not found: " + export_filename + ". No previous learning to import.");
+	        return;
+	    }
+	    System.out.println("Using previous learning from " + export_filename + ".");
+
+	    String jsonStr = "";
+	    while (s.hasNextLine()){
+	        jsonStr += s.nextLine();
+	    }
+	    s.close();
+        JSONObject j_obj = new JSONObject(jsonStr);
+
+        // Read state_vector
+//	    JSONArray sv_ja = j_obj.getJSONArray("state_vector");
+//	    for (int i = 0; i < sv_ja.length(); i++){
+//	        state_vector.add(sv_ja.getInt(i));
+//	    }
+
+	    // Read action_vector
+//	    JSONArray av_ja = j_obj.getJSONArray("action_vector");
+//	    for (int i = 0; i < av_ja.length(); i++){
+//	        action_vector.add(av_ja.getInt(i));
+//	    }
+
+	    // Read reward_vector
+	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
+	    for (int i = 0; i < rv_ja.length(); i++){
+	        reward_vector.add(rv_ja.getDouble(i));
+	    }
+	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
+
+	    // Read num_of_times_states_visited
+	    JSONArray stv_ja = j_obj.getJSONArray("num_of_times_states_visited");
+	    for (int i = 0; i < stv_ja.length(); i++){
+	        num_of_times_states_visited[i]= stv_ja.getInt(i);
+	    }
+	    System.out.println("Read " + stv_ja.length() + " elements from " + export_filename + " to num_of_times_states_visited.");
+
+	    // Read policy_table
+	    JSONArray pt_ija = j_obj.getJSONArray("policy_table");
+	    for (int i = 0; i < pt_ija.length(); i++){
+	        JSONArray pt_jja = pt_ija.getJSONArray(i);
+	        for (int j = 0; j < pt_jja.length(); j++){
+	            policy_table[i][j] = pt_jja.getInt(j);
+	        }
+	    }
+	    System.out.println("Read " + (pt_ija.length() * pt_ija.getJSONArray(0).length()) + " elements from " + export_filename + " to num_of_times_states_visited.");
+	}
+
 	private void exportTablesToFile(){
 	    System.out.println("Exporting vectors and tables to file.");
 
         PrintWriter export = null;
+        Boolean notBeginning = false;
         try {
             export = new PrintWriter("ref_export.json", "UTF-8");
         } catch (Exception e){
@@ -626,34 +659,34 @@ public class ExMarioAgent implements AgentInterface {
         export.println(indent(0) + "{");
 
         // Export state_vector
-        Boolean notBeginning = false;
-        export.println(indent(1) + "state_vector:");
-        export.println(indent(1) + "[");
-        for (int sv_i : state_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + sv_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"state_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int sv_i : state_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + sv_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
 
         // Export action_vector
-        notBeginning = false;
-        export.println(indent(1) + "action_vector:");
-        export.println(indent(1) + "[");
-        for (int av_i : action_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + av_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"action_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int av_i : action_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + av_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
 
         // Export reward_vector
         notBeginning = false;
-        export.println(indent(1) + "reward_vector:");
+        export.println(indent(1) + "\"reward_vector\":");
         export.println(indent(1) + "[");
         for (double rw_i : reward_vector){
             if (notBeginning){
@@ -663,12 +696,13 @@ public class ExMarioAgent implements AgentInterface {
             notBeginning = true;
         }
         export.println("\n" + indent(1) + "],");
+        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
 
         // Export num_of_times_states_visited
         notBeginning = false;
-        export.println(indent(1) + "num_of_times_states_visited:");
+        export.println(indent(1) + "\"num_of_times_states_visited\":");
         export.println(indent(1) + "[");
-        for (double sv_i : num_of_times_states_visited){
+        for (int sv_i : num_of_times_states_visited){
             if (notBeginning){
                 export.println(",");
             }
@@ -676,10 +710,11 @@ public class ExMarioAgent implements AgentInterface {
             notBeginning = true;
         }
         export.println("\n" + indent(1) + "],");
+        System.out.println("Wrote " + num_of_times_states_visited.length + " elements from num_of_times_states_visited to " + export_filename + ".");
 
         // Export policy_table
         notBeginning = false;
-        export.println(indent(1) + "policy_table:");
+        export.println(indent(1) + "\"policy_table\":");
         export.println(indent(1) + "[");
         Boolean notBeginning2;
         for (int[] pt_i : policy_table){
@@ -698,20 +733,13 @@ public class ExMarioAgent implements AgentInterface {
             export.print("]");
             notBeginning = true;
         }
-        export.println("\n" + indent(1) + "],");
+        export.println("\n" + indent(1) + "]");
+        System.out.println("Wrote " + policy_table.length * policy_table[0].length + " elements from policy_table to " + export_filename + ".");
 
 
         export.println(indent(0) + "}");
         export.close();
 	}
-
-	//	private ArrayList<Integer> state_vector;
-//	private ArrayList<Integer> action_vector;
-//	private ArrayList<Double> reward_vector;
-//	private int[] num_of_times_states_visited;
-//	private int[][] policy_table;
-
-
 
 	public static void main(String[] args) {
 		new AgentLoader(new ExMarioAgent()).run();
