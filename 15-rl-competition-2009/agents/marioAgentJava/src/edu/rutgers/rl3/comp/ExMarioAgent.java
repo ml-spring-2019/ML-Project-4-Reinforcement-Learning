@@ -261,6 +261,13 @@ public class ExMarioAgent implements AgentInterface {
 		 return firstDigit + secondDigit + thirdDigit;
 	}
 
+	int[] convertBackToAction(int code){
+		 int direction = ((code - (code % 100)) / 100) - 1;
+		 int jump = ((code % 100) - (code % 10)) / 10;
+		 int speed = (code % 10);
+		 return new int[]{direction, jump, speed};
+	}
+
 	ExMarioAgent() {
 		// initialize variables
 		num_of_times_states_visited = new int[(int)Math.pow(2, NUMBER_OF_STATES)];
@@ -282,7 +289,6 @@ public class ExMarioAgent implements AgentInterface {
 					}
 			 }
 		}
-
 		initializeStateRewards();
 
 	    actionNum = 0;
@@ -324,13 +330,14 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t{");
 		debug_out.println("\t\t\"episode\": " + episode_num + ",");
 		debug_out.println("\t\t\"steps\":[");
-
 		debug_out.println("\t\t{");
         debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
 		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
+
 		Action a = getAction(o);
+
 		debug_out.println("\t\t\t}");
         debug_out.print("\t\t}");
 		episode_num++;
@@ -348,20 +355,18 @@ public class ExMarioAgent implements AgentInterface {
 
 
 		debug_out.println("\t\t{");
-
 		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
 		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
 		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
 
-    Action a = getAction(o);
+        Action a = getAction(o);
 		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
 
-    debug_out.println("\t\t\t},");
-		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
-		debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
-    debug_out.print("\t\t}");
+        debug_out.println("\t\t\t},");
+        debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+        debug_out.print("\t\t}");
 
 		return a;
 	}
@@ -384,27 +389,22 @@ public class ExMarioAgent implements AgentInterface {
 
 			state_vector.clear();
 			action_vector.clear();
+
 //		Enumeration e = last_actions.elements();
 
 //		while (last_actions.hasMoreElements()){
 //		    System.out.println("last_actions: " + last_actions.nextElement());
 //		}
 
-
-//		System.out.println("ended after "+total_steps+" total steps");
-//		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
-
         debug_out.println("\n\t\t],");
-				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
-				debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
+        debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+        debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
         debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
         debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
         debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
         debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
         debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
         debug_out.print("\t}");
-
-
 	}
 
 	public String agent_message(String msg) {
@@ -565,26 +565,24 @@ public class ExMarioAgent implements AgentInterface {
 		act.intArray[2] = (is_pit||!monster_near)?1:0;//rand.nextBoolean()?1:0;
 
 
-//	print out the current state
-		for (Boolean b : cur_state) {
-			if (b == true)
-				debug_out.println("t");
-			else
-				debug_out.println("f");
-		}
-*/
+        //	print out the current state
+                for (Boolean b : cur_state) {
+                    if (b == true)
+                        debug_out.println("t");
+                    else
+                        debug_out.println("f");
+                }
+        */
 
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
 		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-
 		debug_out.println("\t\t\t\t\"will_jump\": " + act.intArray[1] + ",");
-debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
+        debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
 		debug_out.println("\t\t\t\t\"walk_hesitating\": " + walk_hesitating + ",");
 		debug_out.println("\t\t\t\t\"monster_near\": " + (monster_near ? true : false) + ",");
 		debug_out.println("\t\t\t\t\"is_pit\": " + (is_pit ? true : false) + ",");
-//		debug_out.println("\t\t\t\t\"jump_rng\": " + jump_rng + ",");
 		debug_out.println("\t\t\t\t\"jump_hesitation\": " + jump_hesitation + ",");
 		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
 		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
