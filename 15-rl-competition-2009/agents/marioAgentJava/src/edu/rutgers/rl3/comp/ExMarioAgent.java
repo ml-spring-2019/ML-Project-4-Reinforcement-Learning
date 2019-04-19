@@ -283,6 +283,9 @@ public class ExMarioAgent implements AgentInterface {
 		last_actions = new Vector<Action>();
 		this_actions = new Vector<Action>();
 		cur_state = new Boolean[NUMBER_OF_STATES];
+		state_vector = new ArrayList<Integer>();
+		action_vector = new ArrayList<Integer>();
+		reward_vector = new ArrayList<Double>();
 
 		int counter = 0;
 		for (int dir = -1; dir < 2; dir++){
@@ -296,21 +299,21 @@ public class ExMarioAgent implements AgentInterface {
 
 		initializeStateRewards();
 
-    try {
-        debug_out = new PrintWriter("debug_log.json", "UTF-8");
-    } catch (Exception e){
-        System.out.println("IO Error debugging.");
-        return;
-    }
-    constructorDebugOut();
-    importTablesFromFile();
+        try {
+            debug_out = new PrintWriter("debug_log.json", "UTF-8");
+        } catch (Exception e){
+            System.out.println("IO Error debugging.");
+            return;
+        }
+        constructorDebugOut();
+        importTablesFromFile();
 	}
 
 	public void agent_init(String task) {
 		total_steps = 0;
 		actionNum = 0;
-    total_reward = 0;
-    episode_num = 0;
+        total_reward = 0;
+        episode_num = 0;
 	}
 
 	public void agent_cleanup() {
@@ -322,9 +325,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	public Action agent_start(Observation o) {
 		isDead = true;
-		state_vector = new ArrayList<Integer>();
-		action_vector = new ArrayList<Integer>();
-		reward_vector = new ArrayList<Double>();
+
 
 		ArrayList episode = new ArrayList();
 
@@ -347,17 +348,18 @@ public class ExMarioAgent implements AgentInterface {
 
 	public void updatePolicyTable() {
 		for (int itr = 0; itr < reward_vector.size(); itr++){
-			policy_table[state_vector.get(itr)][action_vector.get(itr)] = total_reward;
+			policy_table[state_vector.get(itr)][action_vector.get(itr)] += reward_vector.get(itr);
 			total_reward -= reward_vector.get(itr);
 		}
 
-		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
-			for (int col = 0; col < NUMBER_OF_ACTIONS; col++){
-				if (policy_itr_table[row][col] != 0){
-					policy_table[row][col] /= policy_itr_table[row][col];
-				}
-			}
-		}
+//		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
+//			for (int col = 0; col < NUMBER_OF_ACTIONS; col++){
+//				if (policy_itr_table[row][col] != 0){
+//
+//					policy_table[row][col] -= policy_itr_table[row][col];
+//				}
+//			}
+//		}
 	}
 
 	public Action agent_step(double r, Observation o) {
@@ -478,16 +480,16 @@ public class ExMarioAgent implements AgentInterface {
 
 
 
-		if (last_actions.size() > step_number) {
-			Action act = last_actions.get(step_number);
-			this_actions.add(act);
-
-			state_vector.add(getIndexOfPolicyTable(cur_state));
-		  action_vector.add(findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2])));
-
-			getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
-			return act;
-		}
+//		if (last_actions.size() > step_number) {
+//			Action act = last_actions.get(step_number);
+//			this_actions.add(act);
+//
+//			state_vector.add(getIndexOfPolicyTable(cur_state));
+//		  action_vector.add(findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2])));
+//
+//			getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
+//			return act;
+//		}
 
 		Action act = new Action(3, 0);
 
@@ -557,34 +559,40 @@ public class ExMarioAgent implements AgentInterface {
                 cur_state[MONSTER] = true;
             }
         }
-
-        // System.out.println("------------");
-        // System.out.println("MONSTER\tPIT\tPIPE\tBREAKA\tQUEST\tBONUS");
-
 		if (explorationProb != 0) {
 
-			double biggest_value = -99;
+			double biggest_value = -99.0;
 			int biggest_value_itr = 0;
-			for (int itr = 0; itr < policy_table[getIndexOfPolicyTable(cur_state)].length; itr++) {
-				if (policy_table[getIndexOfPolicyTable(cur_state)][itr] > biggest_value) {
+			double val;
+
+			int forLength = policy_table[getIndexOfPolicyTable(cur_state)].length;
+			if (getIndexOfPolicyTable(cur_state) == 0){
+			    System.out.println("------------------------");
+                System.out.println("getIndexOfPolicyTable(cur_state): " + getIndexOfPolicyTable(cur_state));
+                System.out.println("forLength: " + forLength);
+			}
+			for (int itr = 0; itr < forLength; itr++) {
+			    val = policy_table[getIndexOfPolicyTable(cur_state)][itr];
+			    if (getIndexOfPolicyTable(cur_state) == 0){
+			        System.out.println("policy_table[getIndexOfPolicyTable(cur_state)][" + itr + "]: " + val);
+			    }
+
+				if (val > biggest_value) {
 					biggest_value_itr = itr;
 					biggest_value = policy_table[getIndexOfPolicyTable(cur_state)][itr];
 				}
 			}
+			if (getIndexOfPolicyTable(cur_state) == 0){
+                System.out.println("biggest_value_itr: " + biggest_value_itr );
+                System.out.println("biggest_value: " + biggest_value );
+			}
 
-			if (isPolicyTableEmpty()) biggest_value_itr = 9;
+			if (isPolicyTableEmpty()){
+			    biggest_value_itr = 9;
+            }
+            int[] cur_action = getActionFromActionIndex(biggest_value_itr);
 
-//            if (getIndexOfPolicyTable(cur_state) == 0){
-//                act.intArray[0] = 1;
-//                act.intArray[1] = 0;
-//                act.intArray[2] = 0;
-//            } else {
-      int[] cur_action = getActionFromActionIndex(biggest_value_itr);
-			// System.out.println("Dir: " + cur_action[0] + "Jum: " + cur_action[1] + "Spe: " + cur_action[2]);
-			// System.out.println("------------\nbiggest_value_itr: " + biggest_value_itr);
-			// System.out.println("Dir: " +  act.intArray[0] + " Jump: " + act.intArray[1] + "Speed: " + act.intArray[2]);
-
-      act.intArray = cur_action;
+            act.intArray = cur_action;
 
 		}
 
