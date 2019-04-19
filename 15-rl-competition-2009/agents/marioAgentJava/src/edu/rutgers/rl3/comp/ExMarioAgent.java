@@ -44,6 +44,7 @@ public class ExMarioAgent implements AgentInterface {
 	private ArrayList<Double> reward_vector;
 	private int[] num_of_times_states_visited;
 	private int[][] policy_table;
+	private int[][] policy_itr_table;
 	private double total_reward;
 	private double episode_reward;
 	private int episode_num;
@@ -64,16 +65,25 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	private void initializeStateRewards(){
-	    int rows = (int) Math.pow(2, NUMBER_OF_STATES);
-	    int cols = NUMBER_OF_ACTIONS;
-	    policy_table = new int[rows][NUMBER_OF_ACTIONS];
-	    for (int i = 0; i < rows; i++){
-	        for (int j = 0; j < cols; j++){
-	            policy_table[i][j] = 0;
-	        }
-	    }
+    int rows = (int) Math.pow(2, NUMBER_OF_STATES);
+    int cols = NUMBER_OF_ACTIONS;
+    policy_table = new int[rows][NUMBER_OF_ACTIONS];
+		policy_itr_table = new int[rows][NUMBER_OF_ACTIONS];
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < cols; j++){
+            policy_table[i][j] = 0;
+						policy_itr_table[i][j] = 0;
+        }
+    }
 	}
 
+	private void flush_policy_itr_table(){
+		int rows = (int) Math.pow(2, NUMBER_OF_STATES);
+    int cols = NUMBER_OF_ACTIONS;
+		for (int i = 0; i < rows; i++)
+				for (int j = 0; j < cols; j++)
+						policy_itr_table[i][j] = 0;
+	}
 	/*
 	 * Returns the char representing the tile at the given location.
 	 * If unknown, returns '\0'.
@@ -313,7 +323,6 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
 			num_of_times_states_visited[itr] = 0;
 		episode_reward = 0;
-
 		trial_start = new Date().getTime();
 		step_number = 0;
 		if (episode_num != 1){
@@ -331,21 +340,27 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
 		Action a = getAction(o);
+
 		debug_out.println("\t\t\t}");
         debug_out.print("\t\t}");
 		episode_num++;
 		return a;
 	}
 
-	public Action agent_step(double r, Observation o) {
-        debug_out.println(",");
+	public void updatePolicyTable(double r, int state_index, int action_index) {
+		policy_table[state_index][action_index] += r;
+	}
 
+	public Action agent_step(double r, Observation o) {
+    debug_out.println(",");
+		reward_vector.add(r);
 		step_number++;
 		total_steps++;
 		// transition function
 		total_reward += r;
 		episode_reward += r;
 
+		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
 
 		debug_out.println("\t\t{");
 
@@ -356,7 +371,6 @@ public class ExMarioAgent implements AgentInterface {
 		debug_out.println("\t\t\t\"actions_to_perform\": {");
 
     Action a = getAction(o);
-		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
 
     debug_out.println("\t\t\t},");
 		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
@@ -367,6 +381,9 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public void agent_end(double r) {
+		reward_vector.add(r);
+		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
+
 		long time_passed = new Date().getTime()-trial_start;
 		if (this_actions.size() > 7) {
 			last_actions = this_actions;
@@ -382,17 +399,10 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
 			num_of_times_states_visited[itr] = 0;
 
+			// Clear the reward, state, and action vectors
+			reward_vector.clear();
 			state_vector.clear();
 			action_vector.clear();
-//		Enumeration e = last_actions.elements();
-
-//		while (last_actions.hasMoreElements()){
-//		    System.out.println("last_actions: " + last_actions.nextElement());
-//		}
-
-
-//		System.out.println("ended after "+total_steps+" total steps");
-//		System.out.println("average "+1000.0*step_number/time_passed+" steps per second");
 
         debug_out.println("\n\t\t],");
 				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
@@ -403,8 +413,6 @@ public class ExMarioAgent implements AgentInterface {
         debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
         debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
         debug_out.print("\t}");
-
-
 	}
 
 	public String agent_message(String msg) {
@@ -544,6 +552,9 @@ public class ExMarioAgent implements AgentInterface {
 		}
 
 		num_of_times_states_visited[getIndexOfReward(cur_state)]++;
+
+		state_vector.add(getIndexOfReward(cur_state));
+		action_vector.add(findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2])));
 
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
