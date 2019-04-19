@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a78e5cb-2e6c-49a4-b051-8716445ce750" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExMarioAgent.java" beforeDir="false" afterPath="$PROJECT_DIR$/ExMarioAgent.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -17,8 +17,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="317" lean-forward="true" selection-start-line="317" selection-end-line="317" />
+            <state relative-caret-position="553">
+              <caret line="713" column="110" selection-start-line="713" selection-start-column="110" selection-end-line="713" selection-end-column="110" />
             </state>
           </provider>
         </entry>
@@ -26,7 +26,9 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../../../../../ref_export.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1145" />
+            <state relative-caret-position="285">
+              <caret line="15" column="30" lean-forward="true" selection-start-line="15" selection-start-column="30" selection-end-line="15" selection-end-column="30" />
+            </state>
           </provider>
         </entry>
       </file>
@@ -43,7 +45,7 @@
         <entry file="file://$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="684">
-              <caret line="36" column="28" selection-start-line="36" selection-start-column="28" selection-end-line="36" selection-end-column="28" />
+              <caret line="36" column="27" selection-start-line="36" selection-start-column="27" selection-end-line="36" selection-end-column="27" />
             </state>
           </provider>
         </entry>
@@ -66,6 +68,10 @@
       <find>policy_table</find>
       <find>log</find>
       <find>policy_itr_table</find>
+      <find>pt_ija</find>
+      <find>flush_policy_itr_table</find>
+      <find>initializeStateRewards</find>
+      <find>reward_vector</find>
     </findStrings>
     <replaceStrings>
       <replace>getIndexOfPolicyTable</replace>
@@ -77,8 +83,8 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/../../../../../ref_export.json" />
         <option value="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" />
+        <option value="$PROJECT_DIR$/../../../../../ref_export.json" />
         <option value="$PROJECT_DIR$/ExMarioAgent.java" />
       </list>
     </option>
@@ -144,7 +150,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="11215000" />
+    <option name="totallyTimeSpent" value="13191000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="853" y="23" width="1707" height="1577" extended-state="0" />
@@ -217,19 +223,21 @@
     <entry file="file://$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="684">
-          <caret line="36" column="28" selection-start-line="36" selection-start-column="28" selection-end-line="36" selection-end-column="28" />
+          <caret line="36" column="27" selection-start-line="36" selection-start-column="27" selection-end-line="36" selection-end-column="27" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../ref_export.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1145" />
+        <state relative-caret-position="285">
+          <caret line="15" column="30" lean-forward="true" selection-start-line="15" selection-start-column="30" selection-end-line="15" selection-end-column="30" />
+        </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="317" lean-forward="true" selection-start-line="317" selection-end-line="317" />
+        <state relative-caret-position="553">
+          <caret line="713" column="110" selection-start-line="713" selection-start-column="110" selection-end-line="713" selection-end-column="110" />
         </state>
       </provider>
     </entry>
