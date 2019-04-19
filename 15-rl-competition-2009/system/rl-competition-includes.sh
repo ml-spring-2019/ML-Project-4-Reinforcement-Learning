@@ -143,7 +143,7 @@ if [[ `uname` == CYGWIN* ]]
 then 
 	agentPath=`cygpath -wp $agentPath`
 fi
-java -Xmx$privateMaxMemory -cp $agentPath $agentQualifiedName
+java -Xmx$privateMaxMemory -cp $agentPath:../../system/libraries/rl-viz/libs/json.jar $agentQualifiedName
 }
 
 startJavaAgentInBackGround(){

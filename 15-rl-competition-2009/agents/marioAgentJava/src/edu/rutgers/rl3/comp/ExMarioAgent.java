@@ -9,6 +9,8 @@ import org.rlcommunity.rlglue.codec.types.Action;
 import org.rlcommunity.rlglue.codec.types.Observation;
 import org.rlcommunity.rlglue.codec.util.AgentLoader;
 
+import org.json.*;
+
 import java.util.Date;
 import java.util.Vector;
 import java.util.Random;
@@ -36,6 +38,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	private int NUMBER_OF_STATES = 8;
 	private int NUMBER_OF_ACTIONS = 12;
+	private final String export_filename = "ref_export.json";
 /*
 	States, Actions, Rewards
 */
@@ -294,55 +297,46 @@ public class ExMarioAgent implements AgentInterface {
 		}
 
 		initializeStateRewards();
-
-	    actionNum = 0;
-        total_reward = 0;
-        episode_num = 0;
-
         try {
             debug_out = new PrintWriter("debug_log.json", "UTF-8");
         } catch (Exception e){
-            System.out.println("File not found.");
+            System.out.println("IO Error debugging.");
             return;
         }
-        debug_out.println("{\n\t\"episodes\":[");
+        constructorDebugOut();
+        importTablesFromFile();
 	}
 
 	public void agent_init(String task) {
 		total_steps = 0;
+		actionNum = 0;
+        total_reward = 0;
+        episode_num = 0;
 	}
 
 	public void agent_cleanup() {
-	    debug_out.println("\n]}");
+	    cleanupDebugOut();
         debug_out.close();
+        exportTablesToFile();
         System.out.println("Check debug_log.json for output.");
 	}
 
 	public Action agent_start(Observation o) {
 		ArrayList episode = new ArrayList();
-		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
+
+		for (int itr = 0; itr < num_of_times_states_visited.length; itr++){
 			num_of_times_states_visited[itr] = 0;
+        }
+
 		episode_reward = 0;
-		trial_start = new Date().getTime();
 		step_number = 0;
-		if (episode_num != 1){
-		debug_out.println(",");
-		}
 
+		trial_start = new Date().getTime();
 
-		debug_out.println("\t{");
-		debug_out.println("\t\t\"episode\": " + episode_num + ",");
-		debug_out.println("\t\t\"steps\":[");
-
-		debug_out.println("\t\t{");
-        debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
-		debug_out.println("\t\t\t\"total_steps\": " + total_steps+ ",");
-		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
-		debug_out.println("\t\t\t\"actions_to_perform\": {");
+        agentStartDebugOutBeforeAction();
 		Action a = getAction(o);
+		agentStartDebugOutAfterAction();
 
-		debug_out.println("\t\t\t}");
-        debug_out.print("\t\t}");
 		episode_num++;
 		return a;
 	}
@@ -352,30 +346,21 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public Action agent_step(double r, Observation o) {
-    debug_out.println(",");
 		reward_vector.add(r);
 		step_number++;
 		total_steps++;
-		// transition function
 		total_reward += r;
 		episode_reward += r;
 
 		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
-
+		agentStepDebugOutStart(r);
 		debug_out.println("\t\t{");
 
-		debug_out.println("\t\t\t\"step_number\": " + step_number + ",");
-		debug_out.println("\t\t\t\"delta_reward\": " + r + ",");
-		debug_out.println("\t\t\t\"episode_reward\": " + episode_reward + ",");
-		debug_out.println("\t\t\t\"total_reward\": " + total_reward + ",");
-		debug_out.println("\t\t\t\"actions_to_perform\": {");
-
     Action a = getAction(o);
+		action_vector.add(findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
 
-    debug_out.println("\t\t\t},");
-		//debug_out.println("\t\t\t\"a.intArray\":" + a.intArray.toString());
-		debug_out.println("\t\t\t\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
-    debug_out.print("\t\t}");
+
+        agentStepDebugOutEnd(a);
 
 		return a;
 	}
@@ -384,7 +369,6 @@ public class ExMarioAgent implements AgentInterface {
 		reward_vector.add(r);
 		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
 
-		long time_passed = new Date().getTime()-trial_start;
 		if (this_actions.size() > 7) {
 			last_actions = this_actions;
 			last_actions.setSize(last_actions.size()-7);
@@ -404,15 +388,8 @@ public class ExMarioAgent implements AgentInterface {
 			state_vector.clear();
 			action_vector.clear();
 
-        debug_out.println("\n\t\t],");
-				debug_out.println("\t\t\t\t\"cur_state[WIN]\": " + cur_state[WIN] + ",");
-				debug_out.println("\t\t\t\t\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
-        debug_out.println("\t\t\"episode_reward\": " + episode_reward + ",");
-        debug_out.println("\t\t\"total_reward\": " + total_reward+ ",");
-        debug_out.println("\t\t\"episode_steps\": " + step_number + ",");
-        debug_out.println("\t\t\"total_steps\": " + total_steps + ",");
-        debug_out.println("\t\t\"steps_per_second\": " + (1000.0*step_number/time_passed));
-        debug_out.print("\t}");
+			agentEndDebugOut();
+              debug_out.print("\t}");
 	}
 
 	public String agent_message(String msg) {
@@ -457,11 +434,10 @@ public class ExMarioAgent implements AgentInterface {
 			Action act = last_actions.get(step_number);
 			this_actions.add(act);
 
-			debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-			debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-			debug_out.println("\t\t\t\t\"will_jump\": " + (act.intArray[1] == 1 ? true : false));
+			getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
 			return act;
 		}
+
 		Action act = new Action(3, 0);
 		if (explorationProb != 0) {
 			Monster mario = ExMarioAgent.getMario(o);
@@ -559,18 +535,235 @@ public class ExMarioAgent implements AgentInterface {
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
-		debug_out.println("\t\t\t\t\"direction_looking\": " + act.intArray[0] + ",");
-
-		debug_out.println("\t\t\t\t\"will_jump\": " + act.intArray[1] + ",");
-		debug_out.println("\t\t\t\t\"speed\": " + act.intArray[2] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[PIT]\": " + cur_state[PIT] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
-		debug_out.println("\t\t\t\t\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
-
+		getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
 		return act;
+	}
+
+	private void constructorDebugOut(){
+	    debug_out.println("{\n\t\"episodes\":[");
+	}
+
+	private void agentStartDebugOutBeforeAction(){
+	    if (episode_num != 0){
+		    debug_out.println(",");
+		}
+	    debug_out.println(indent(1) + "{");
+		debug_out.println(indent(2) + "\"episode\": " + episode_num + ",");
+		debug_out.println(indent(2) + "\"steps\":[");
+		debug_out.println(indent(2) + "{");
+        debug_out.println(indent(3) + "\"step_number\": " + step_number + ",");
+		debug_out.println(indent(3) + "\"total_steps\": " + total_steps+ ",");
+		debug_out.println(indent(3) + "\"total_reward\": " + total_reward + ",");
+		debug_out.println(indent(3) + "\"actions_to_perform\": {");
+	}
+
+	private void agentStartDebugOutAfterAction(){
+	    debug_out.println("\t\t\t}");
+        debug_out.print("\t\t}");
+	}
+
+	private void getActionDebugOut(Boolean truncated_action, int explorationProb, Action act){
+        debug_out.println(indent(4) + "\"last_actions.size() > step_number\": " + truncated_action + ",");
+        debug_out.println(indent(4) + "\"explorationProb\": " + explorationProb + ",");
+        debug_out.println(indent(4) + "\"a.intArray[0]\": " + act.intArray[0] + ",");
+        debug_out.println(indent(4) + "\"a.intArray[1]\": " + act.intArray[1] + ",");
+        debug_out.println(indent(4) + "\"a.intArray[2]\": " + act.intArray[2] + ",");
+        debug_out.println(indent(4) + "\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
+        debug_out.println(indent(4) + "\"cur_state[PIT]\": " + cur_state[PIT] + ",");
+        debug_out.println(indent(4) + "\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
+        debug_out.println(indent(4) + "\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
+        debug_out.println(indent(4) + "\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
+        debug_out.println(indent(4) + "\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
+	}
+
+	private void agentStepDebugOutStart(double r){
+	    debug_out.println(",\n" + indent(2) + "{");
+	    debug_out.println(indent(3) + "\"step_number\": " + step_number + ",");
+		debug_out.println(indent(3) + "\"delta_reward\": " + r + ",");
+		debug_out.println(indent(3) + "\"episode_reward\": " + episode_reward + ",");
+		debug_out.println(indent(3) + "\"total_reward\": " + total_reward + ",");
+		debug_out.println(indent(3) + "\"actions_to_perform\": {");
+	}
+
+	private void agentStepDebugOutEnd(Action a){
+	    debug_out.println(indent(3) + "},");
+		debug_out.println(indent(3) + "\"action_vector_num\": " + findActionCol.get(convertForFindActionCol(a.intArray[0], a.intArray[1], a.intArray[2])));
+        debug_out.print(indent(2) + "}");
+	}
+
+	private void agentEndDebugOut(){
+	    long time_passed = new Date().getTime()-trial_start;
+	    debug_out.println("\n\t\t],");
+        debug_out.println(indent(2) + "\"cur_state[WIN]\": " + cur_state[WIN] + ",");
+        debug_out.println(indent(2) + "\"cur_state[DEAD]\": " + cur_state[DEAD] + ",");
+        debug_out.println(indent(2) + "\"episode_reward\": " + episode_reward + ",");
+        debug_out.println(indent(2) + "\"total_reward\": " + total_reward+ ",");
+        debug_out.println(indent(2) + "\"episode_steps\": " + step_number + ",");
+        debug_out.println(indent(2) + "\"total_steps\": " + total_steps + ",");
+        debug_out.println(indent(2) + "\"steps_per_second\": " + (1000.0 * step_number / time_passed));
+	}
+
+	private void cleanupDebugOut(){
+	    debug_out.println("\n]}");
+	}
+
+	private String indent(int numOfTabsToAdd){
+	    String result = "";
+	    for (int i = 0; i < numOfTabsToAdd; i++){
+	        result += "\t";
+	    }
+	    return result;
+	}
+
+	private void importTablesFromFile(){
+	    Scanner s = null;
+
+        try{
+            s = new Scanner(new File(export_filename));
+	    } catch (Exception e){
+	        System.out.println("File not found: " + export_filename + ". No previous learning to import.");
+	        return;
+	    }
+	    System.out.println("Using previous learning from " + export_filename + ".");
+
+	    String jsonStr = "";
+	    while (s.hasNextLine()){
+	        jsonStr += s.nextLine();
+	    }
+	    s.close();
+        JSONObject j_obj = new JSONObject(jsonStr);
+
+        // Read state_vector
+//	    JSONArray sv_ja = j_obj.getJSONArray("state_vector");
+//	    for (int i = 0; i < sv_ja.length(); i++){
+//	        state_vector.add(sv_ja.getInt(i));
+//	    }
+
+	    // Read action_vector
+//	    JSONArray av_ja = j_obj.getJSONArray("action_vector");
+//	    for (int i = 0; i < av_ja.length(); i++){
+//	        action_vector.add(av_ja.getInt(i));
+//	    }
+
+	    // Read reward_vector
+	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
+	    for (int i = 0; i < rv_ja.length(); i++){
+	        reward_vector.add(rv_ja.getDouble(i));
+	    }
+	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
+
+	    // Read num_of_times_states_visited
+	    JSONArray stv_ja = j_obj.getJSONArray("num_of_times_states_visited");
+	    for (int i = 0; i < stv_ja.length(); i++){
+	        num_of_times_states_visited[i]= stv_ja.getInt(i);
+	    }
+	    System.out.println("Read " + stv_ja.length() + " elements from " + export_filename + " to num_of_times_states_visited.");
+
+	    // Read policy_table
+	    JSONArray pt_ija = j_obj.getJSONArray("policy_table");
+	    for (int i = 0; i < pt_ija.length(); i++){
+	        JSONArray pt_jja = pt_ija.getJSONArray(i);
+	        for (int j = 0; j < pt_jja.length(); j++){
+	            policy_table[i][j] = pt_jja.getInt(j);
+	        }
+	    }
+	    System.out.println("Read " + (pt_ija.length() * pt_ija.getJSONArray(0).length()) + " elements from " + export_filename + " to num_of_times_states_visited.");
+	}
+
+	private void exportTablesToFile(){
+	    System.out.println("Exporting vectors and tables to file.");
+
+        PrintWriter export = null;
+        Boolean notBeginning = false;
+        try {
+            export = new PrintWriter("ref_export.json", "UTF-8");
+        } catch (Exception e){
+            System.out.println("IO Error exporting.");
+            return;
+        }
+        export.println(indent(0) + "{");
+
+        // Export state_vector
+//        notBeginning = false;
+//        export.println(indent(1) + "\"state_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int sv_i : state_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + sv_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+
+        // Export action_vector
+//        notBeginning = false;
+//        export.println(indent(1) + "\"action_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int av_i : action_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + av_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+
+        // Export reward_vector
+        notBeginning = false;
+        export.println(indent(1) + "\"reward_vector\":");
+        export.println(indent(1) + "[");
+        for (double rw_i : reward_vector){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + rw_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
+
+        // Export num_of_times_states_visited
+        notBeginning = false;
+        export.println(indent(1) + "\"num_of_times_states_visited\":");
+        export.println(indent(1) + "[");
+        for (int sv_i : num_of_times_states_visited){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + sv_i);
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+        System.out.println("Wrote " + num_of_times_states_visited.length + " elements from num_of_times_states_visited to " + export_filename + ".");
+
+        // Export policy_table
+        notBeginning = false;
+        export.println(indent(1) + "\"policy_table\":");
+        export.println(indent(1) + "[");
+        Boolean notBeginning2;
+        for (int[] pt_i : policy_table){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + "[");
+            notBeginning2 = false;
+            for (int pt_j : pt_i){
+                if (notBeginning2){
+                    export.print(", ");
+                }
+                export.print(pt_j);
+                notBeginning2 = true;
+            }
+            export.print("]");
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "]");
+        System.out.println("Wrote " + policy_table.length * policy_table[0].length + " elements from policy_table to " + export_filename + ".");
+
+
+        export.println(indent(0) + "}");
+        export.close();
 	}
 
 	public static void main(String[] args) {
