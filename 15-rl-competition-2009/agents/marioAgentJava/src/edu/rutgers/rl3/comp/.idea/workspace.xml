@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a78e5cb-2e6c-49a4-b051-8716445ce750" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent$Monster.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent$Monster.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExMarioAgent.java" beforeDir="false" afterPath="$PROJECT_DIR$/ExMarioAgent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -18,8 +18,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="926">
-              <caret line="546" column="12" lean-forward="true" selection-start-line="546" selection-start-column="12" selection-end-line="557" selection-end-column="13" />
+            <state relative-caret-position="747">
+              <caret line="551" column="41" selection-start-line="551" selection-start-column="41" selection-end-line="551" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -101,6 +101,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -128,12 +129,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1555632752371</updated>
-      <workItem from="1555632757022" duration="7855000" />
+      <workItem from="1555632757022" duration="8130000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7855000" />
+    <option name="totallyTimeSpent" value="8130000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="853" y="23" width="1707" height="1577" extended-state="0" />
@@ -212,8 +213,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="926">
-          <caret line="546" column="12" lean-forward="true" selection-start-line="546" selection-start-column="12" selection-end-line="557" selection-end-column="13" />
+        <state relative-caret-position="747">
+          <caret line="551" column="41" selection-start-line="551" selection-start-column="41" selection-end-line="551" selection-end-column="41" />
         </state>
       </provider>
     </entry>

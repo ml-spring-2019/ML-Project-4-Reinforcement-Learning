@@ -549,8 +549,13 @@ public class ExMarioAgent implements AgentInterface {
 //                act.intArray[1] = 0;
 //                act.intArray[2] = 0;
 //            } else {
-              int biggest_value_itr = 8;
+              int biggest_value_itr = 200;
               int[] cur_action = convertBackToAction(biggest_value_itr);
+
+              for (int i=0; i < cur_action.length; i++){
+                    System.out.print("cur_action[" + i + "]: " + cur_action[i] + " \t");
+              }
+              System.out.print("\n");
 //                for (int i = 0; i < cur_action.length; i++){
 //                    System.out.println("cur_action[" + i + "]: " + cur_action[i]);
 //                }
