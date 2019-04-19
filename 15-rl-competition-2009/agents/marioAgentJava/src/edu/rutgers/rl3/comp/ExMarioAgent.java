@@ -326,12 +326,51 @@ public class ExMarioAgent implements AgentInterface {
     System.out.println("Check debug_log.json for output.");
 	}
 
+	private String getActionAsString(int a){
+	    switch (a){
+	        case 0:
+	            return "walk back    ";
+	        case 1:
+	            return "run back     ";
+	        case 2:
+	            return "jump back    ";
+	        case 3:
+	            return "big jump back";
+	        case 4:
+	            return "idle         ";
+	        case 5:
+	            return "jump in place";
+	        case 6:
+	            return "idle         ";
+	        case 7:
+	            return "jump in place";
+	        case 8:
+	            return "walk forward ";
+	        case 9:
+	            return "run forward  ";
+	        case 10:
+	            return "jump forward ";
+	        case 11:
+	            return "big jump forw";
+	        default:
+	            return "unknown";
+
+	    }
+	}
+
 	public Action agent_start(Observation o) {
 	    System.out.println("====================================================");
         System.out.println("[Episode " + episode_num + "]: Policy table for state 0 (flat ground):");
+        double largest = Double.NEGATIVE_INFINITY;
+        int largest_ind = -1;
 		for (int i = 0; i < NUMBER_OF_ACTIONS; i++){
-		    System.out.println("policy_table[0][" + i + "]: " + policy_table[0][i]);
+		    System.out.println(getActionAsString(i) + ": " + policy_table[0][i] + " \t itr: " + policy_itr_table[0][i]);
+		    if (policy_table[0][i] > largest){
+		        largest = policy_table[0][i];
+		        largest_ind = i;
+		    }
 		}
+		System.out.println("Largest: " + largest + " | Preferred action: " + getActionAsString(largest_ind));
 
 		isDead = true;
 
@@ -359,16 +398,10 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < reward_vector.size(); itr++){
 		    int ind1 = state_vector.get(itr);
             int ind2 = action_vector.get(itr);
-			policy_table[ind1][ind2] += reward_vector.get(itr);
-//			total_reward -= reward_vector.get(itr);
-		}
+			double my_rew = episode_reward - reward_vector.get(itr);
 
-		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
-			for (int col = 0; col < NUMBER_OF_ACTIONS; col++){
-				if (policy_itr_table[row][col] != 0){
-					policy_table[row][col] /= policy_itr_table[row][col];
-				}
-			}
+			policy_table[ind1][ind2] = (policy_table[ind1][ind2] * ((double)(policy_itr_table[ind1][ind2]) - 1) + my_rew) / (double)policy_itr_table[ind1][ind2];
+			episode_reward -= my_rew;
 		}
 	}
 
@@ -391,6 +424,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	public void agent_end(double r) {
 		total_reward += r;
+		episode_reward += r;
 		reward_vector.add(r);
 		updatePolicyTable();
 
@@ -407,8 +441,12 @@ public class ExMarioAgent implements AgentInterface {
 
 			agentEndDebugOut();
               debug_out.print("\t}");
-		if (isDead)	System.out.println("DEAD");
-		else System.out.println("WIN");
+		if (isDead)	System.out.println("MARIO WAS KILLED X(");
+		else System.out.println("MARIO WON!! :D");
+
+		reward_vector.clear();
+		action_vector.clear();
+		state_vector.clear();
 	}
 
 	public String agent_message(String msg) {
