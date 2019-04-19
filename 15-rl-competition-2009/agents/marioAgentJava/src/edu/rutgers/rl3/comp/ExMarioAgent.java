@@ -36,7 +36,7 @@ import java.util.Hashtable;
  */
 public class ExMarioAgent implements AgentInterface {
 
-	private int NUMBER_OF_STATES = 6;
+	private int NUMBER_OF_STATES = 9;
 	private int NUMBER_OF_ACTIONS = 12;
 	private final String export_filename = "ref_export.json";
 /*
@@ -454,13 +454,16 @@ public class ExMarioAgent implements AgentInterface {
 		return null;
 	}
 
-	private static final int MONSTER = 0;
-	private static final int PIT = 1;
-	private static final int PIPE = 2;
-	private static final int BREAKABLE_BLOCK = 3;
-	private static final int QUESTION_BLOCK = 4;
-	private static final int BONUS_ITEM = 5;
-	private static final int SOFT_POLICY = 4;
+	private static final int MONSTER_NEAR = 0;
+	private static final int MONSTER_FAR = 1;
+	private static final int MONSTER_ABOVE = 2;
+	private static final int MONSTER_BELOW = 3;
+	private static final int PIT = 4;
+	private static final int PIPE = 5;
+	private static final int BREAKABLE_BLOCK = 6;
+	private static final int QUESTION_BLOCK = 7;
+	private static final int BONUS_ITEM = 8;
+	private static final int SOFT_POLICY = 5;
 
 	int[] convertBackToAction(int code){
 		 int direction = ((code - (code % 100)) / 100) - 1;
@@ -538,7 +541,7 @@ public class ExMarioAgent implements AgentInterface {
          * Check the blocks in the area to mario's upper right
          */
         for (int up=0; up<5; up++) {
-            for (int right = 0; right<5  ; right++) {
+            for (int right = 0; right<3; right++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
                 if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
                 else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
@@ -550,7 +553,7 @@ public class ExMarioAgent implements AgentInterface {
          * Search for a pit in front of mario.
         */
         boolean is_pit = false;
-        for (int right = 0; !is_pit && right<5; right++) {
+        for (int right = 0; !is_pit && right<3; right++) {
             boolean pit_col = true;
             for (int down=0; pit_col && mario.y-down>=0; down++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
@@ -568,7 +571,7 @@ public class ExMarioAgent implements AgentInterface {
         /*
          * Search for a pipe in front of mario.
          */
-        for (int right = 0; right<5; right++) {
+        for (int right = 0; right<3; right++) {
             char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
             if (tile == '|')
                 cur_state[PIPE] = true;
@@ -585,13 +588,17 @@ public class ExMarioAgent implements AgentInterface {
             }
             double dx = m.x-mario.x;
             double dy = m.y-mario.y;
-            if (dx > -1 && dx < 10 && dy > -4 && dy < 4) {
-                /* the more monsters and the closer they are, the more likely
-                 * mario is to jump.
-                 */
-                cur_state[MONSTER] = true;
-            }
+
+						if (dx > -1 && dx < 4)
+							cur_state[MONSTER_NEAR] = true;
+            else if (dx > -1 && dx < 10)
+              cur_state[MONSTER_FAR] = true;
+						if (dy > 1 && dy < 5)
+							cur_state[MONSTER_ABOVE] = true;
+						else if (dy < -1 && dy > -5)
+							cur_state[MONSTER_BELOW] = true;
         }
+
 		if (explorationProb != 0) {
 
 			double biggest_value = Double.NEGATIVE_INFINITY;
@@ -666,7 +673,7 @@ public class ExMarioAgent implements AgentInterface {
         debug_out.println(indent(4) + "\"a.intArray[0]\": " + act.intArray[0] + ",");
         debug_out.println(indent(4) + "\"a.intArray[1]\": " + act.intArray[1] + ",");
         debug_out.println(indent(4) + "\"a.intArray[2]\": " + act.intArray[2] + ",");
-        debug_out.println(indent(4) + "\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
+        // debug_out.println(indent(4) + "\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
         debug_out.println(indent(4) + "\"cur_state[PIT]\": " + cur_state[PIT] + ",");
         debug_out.println(indent(4) + "\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
         debug_out.println(indent(4) + "\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
