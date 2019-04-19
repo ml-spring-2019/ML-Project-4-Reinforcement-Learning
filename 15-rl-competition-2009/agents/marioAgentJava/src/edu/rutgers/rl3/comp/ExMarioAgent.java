@@ -418,6 +418,37 @@ public class ExMarioAgent implements AgentInterface {
 		 return new int[]{direction, jump, speed};
 	}
 
+	int[] getActionFromActionIndex(int actionIndex){
+		switch (actionIndex) {
+			case 0:
+				return new int[]{-1,0,0};
+			case 1:
+				return new int[]{-1,0,1};
+			case 2:
+				return new int[]{-1,1,0};
+			case 3:
+				return new int[]{-1,1,1};
+			case 4:
+				return new int[]{0,0,0};
+			case 5:
+				return new int[]{0,0,1};
+			case 6:
+				return new int[]{0,1,0};
+			case 7:
+				return new int[]{0,1,1};
+			case 8:
+				return new int[]{1,0,0};
+			case 9:
+				return new int[]{1,0,1};
+			case 10:
+				return new int[]{1,1,0};
+			case 11:
+				return new int[]{1,1,1};
+			default:
+					System.out.println("INVALID TOP ZACH BOI");
+					return new int[]{-4,-4,-4};
+			}
+	}
 // States: tiles
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
@@ -550,10 +581,9 @@ public class ExMarioAgent implements AgentInterface {
 //                act.intArray[1] = 0;
 //                act.intArray[2] = 0;
 //            } else {
-
-      int[] cur_action = convertBackToAction(biggest_value_itr);
-			System.out.println("------------\nbiggest_value_itr: " + biggest_value_itr);
-			System.out.println("Dir: " +  act.intArray[0] + " Jump: " + act.intArray[1] + "Speed: " + act.intArray[2]);
+      int[] cur_action = getActionFromActionIndex(biggest_value_itr);
+			// System.out.println("------------\nbiggest_value_itr: " + biggest_value_itr);
+			// System.out.println("Dir: " +  act.intArray[0] + " Jump: " + act.intArray[1] + "Speed: " + act.intArray[2]);
 
       act.intArray = cur_action;
 
