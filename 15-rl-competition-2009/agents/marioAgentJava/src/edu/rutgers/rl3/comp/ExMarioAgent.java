@@ -295,28 +295,29 @@ public class ExMarioAgent implements AgentInterface {
 		}
 
 		initializeStateRewards();
-        try {
-            debug_out = new PrintWriter("debug_log.json", "UTF-8");
-        } catch (Exception e){
-            System.out.println("IO Error debugging.");
-            return;
-        }
-        constructorDebugOut();
-        importTablesFromFile();
+
+    try {
+        debug_out = new PrintWriter("debug_log.json", "UTF-8");
+    } catch (Exception e){
+        System.out.println("IO Error debugging.");
+        return;
+    }
+    constructorDebugOut();
+    importTablesFromFile();
 	}
 
 	public void agent_init(String task) {
 		total_steps = 0;
 		actionNum = 0;
-        total_reward = 0;
-        episode_num = 0;
+    total_reward = 0;
+    episode_num = 0;
 	}
 
 	public void agent_cleanup() {
-	    cleanupDebugOut();
-        debug_out.close();
-        exportTablesToFile();
-        System.out.println("Check debug_log.json for output.");
+    cleanupDebugOut();
+    debug_out.close();
+    exportTablesToFile();
+    System.out.println("Check debug_log.json for output.");
 	}
 
 	public Action agent_start(Observation o) {
@@ -396,6 +397,8 @@ public class ExMarioAgent implements AgentInterface {
 
 			agentEndDebugOut();
               debug_out.print("\t}");
+		if (isDead)	System.out.println("DEAD");
+		else System.out.println("WIN");
 	}
 
 	public String agent_message(String msg) {
@@ -555,25 +558,8 @@ public class ExMarioAgent implements AgentInterface {
             }
         }
 
-//        private static final int MONSTER = 0;
-//        private static final int PIT = 1;
-//        private static final int PIPE = 2;
-//        private static final int BREAKABLE_BLOCK = 3;
-//        private static final int QUESTION_BLOCK = 4;
-//        private static final int BONUS_ITEM = 5;
-//        private static final int WIN = 6;
-//        private static final int DEAD = 7;
-//        private static final int SOFT_POLICY = 4;
-
         // System.out.println("------------");
         // System.out.println("MONSTER\tPIT\tPIPE\tBREAKA\tQUEST\tBONUS");
-
-        // for (int i = 0; i < 6; i++){
-        //     System.out.print(cur_state[i] + "\t");
-        // }
-				//
-        // System.out.println("ID: " + getIndexOfPolicyTable(cur_state));
-
 
 		if (explorationProb != 0) {
 
@@ -594,7 +580,7 @@ public class ExMarioAgent implements AgentInterface {
 //                act.intArray[2] = 0;
 //            } else {
       int[] cur_action = getActionFromActionIndex(biggest_value_itr);
-			System.out.println("Dir: " + cur_action[0] + "Jum: " + cur_action[1] + "Spe: " + cur_action[2]);
+			// System.out.println("Dir: " + cur_action[0] + "Jum: " + cur_action[1] + "Spe: " + cur_action[2]);
 			// System.out.println("------------\nbiggest_value_itr: " + biggest_value_itr);
 			// System.out.println("Dir: " +  act.intArray[0] + " Jump: " + act.intArray[1] + "Speed: " + act.intArray[2]);
 
