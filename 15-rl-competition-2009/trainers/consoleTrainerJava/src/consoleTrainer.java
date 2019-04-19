@@ -34,7 +34,7 @@ public class consoleTrainer {
 	
 		RLGlue.RL_init();
 
-		int episodeCount=10; //number of episodes to run
+		int episodeCount=100; //number of episodes to run
 		int maxEpisodeLength=20000; //set a maxEpisodeLength to cut off long episodes
 	
 		int totalSteps=0;//counter for the total number of steps taken to finish all episodes

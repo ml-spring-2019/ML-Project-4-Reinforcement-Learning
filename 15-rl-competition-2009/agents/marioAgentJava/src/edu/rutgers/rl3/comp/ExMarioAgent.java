@@ -360,7 +360,7 @@ public class ExMarioAgent implements AgentInterface {
 		    int ind1 = state_vector.get(itr);
             int ind2 = action_vector.get(itr);
 			policy_table[ind1][ind2] += reward_vector.get(itr);
-			total_reward -= reward_vector.get(itr);
+//			total_reward -= reward_vector.get(itr);
 		}
 
 		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
@@ -683,12 +683,13 @@ public class ExMarioAgent implements AgentInterface {
 	        return;
 	    }
 	    System.out.println("Using previous learning from " + export_filename + ".");
+        System.out.println("Reading from file.");
 
 	    String jsonStr = "";
-	    while (s.hasNextLine()){
-	        jsonStr += s.nextLine();
-	    }
+        s.useDelimiter("\\Z");
+        jsonStr += s.next();
 	    s.close();
+	    System.out.println("Parsing json.");
         JSONObject j_obj = new JSONObject(jsonStr);
 
 	    // Read reward_vector

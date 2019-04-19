@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/comp.iml" filepath="$PROJECT_DIR$/.idea/comp.iml" />
+      <module fileurl="file://$USER_HOME$/PycharmProjects/ecs-cluster/.idea/ecs-cluster.iml" filepath="$USER_HOME$/PycharmProjects/ecs-cluster/.idea/ecs-cluster.iml" />
     </modules>
   </component>
 </project>
