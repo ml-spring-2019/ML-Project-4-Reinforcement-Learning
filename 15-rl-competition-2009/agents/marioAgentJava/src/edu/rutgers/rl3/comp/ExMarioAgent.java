@@ -449,6 +449,16 @@ public class ExMarioAgent implements AgentInterface {
 					return new int[]{-4,-4,-4};
 			}
 	}
+
+	Boolean isPolicyTableEmpty(){
+		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++) {
+			for (int col = 0; col < NUMBER_OF_ACTIONS; col++) {
+				if (policy_table[row][col] != 0) return false;
+			}
+		}
+		return true;
+	}
+
 // States: tiles
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
@@ -576,12 +586,15 @@ public class ExMarioAgent implements AgentInterface {
 				}
 			}
 
+			if (isPolicyTableEmpty()) biggest_value_itr = 9;
+
 //            if (getIndexOfPolicyTable(cur_state) == 0){
 //                act.intArray[0] = 1;
 //                act.intArray[1] = 0;
 //                act.intArray[2] = 0;
 //            } else {
       int[] cur_action = getActionFromActionIndex(biggest_value_itr);
+			System.out.println("Dir: " + cur_action[0] + "Jum: " + cur_action[1] + "Spe: " + cur_action[2]);
 			// System.out.println("------------\nbiggest_value_itr: " + biggest_value_itr);
 			// System.out.println("Dir: " +  act.intArray[0] + " Jump: " + act.intArray[1] + "Speed: " + act.intArray[2]);
 
