@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a78e5cb-2e6c-49a4-b051-8716445ce750" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent$Monster.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent$Monster.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../bin/edu/rutgers/rl3/comp/ExMarioAgent.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExMarioAgent.java" beforeDir="false" afterPath="$PROJECT_DIR$/ExMarioAgent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/bin/consoleTrainer.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../../../trainers/consoleTrainerJava/src/consoleTrainer.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -18,9 +17,16 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="688">
-              <caret line="362" lean-forward="true" selection-start-line="362" selection-end-line="362" />
+            <state relative-caret-position="126">
+              <caret line="317" lean-forward="true" selection-start-line="317" selection-end-line="317" />
             </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../ref_export.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1145" />
           </provider>
         </entry>
       </file>
@@ -57,8 +63,9 @@
       <find>convertBackToAction</find>
       <find>convertForFindActionCol</find>
       <find>isPolicyTableEmpty</find>
-      <find>log</find>
       <find>policy_table</find>
+      <find>log</find>
+      <find>policy_itr_table</find>
     </findStrings>
     <replaceStrings>
       <replace>getIndexOfPolicyTable</replace>
@@ -137,7 +144,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="10227000" />
+    <option name="totallyTimeSpent" value="11215000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="853" y="23" width="1707" height="1577" extended-state="0" />
@@ -200,11 +207,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../ref_export.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3999" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../../../../project2/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="470">
@@ -219,10 +221,15 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../ref_export.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1145" />
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ExMarioAgent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
-          <caret line="362" lean-forward="true" selection-start-line="362" selection-end-line="362" />
+        <state relative-caret-position="126">
+          <caret line="317" lean-forward="true" selection-start-line="317" selection-end-line="317" />
         </state>
       </provider>
     </entry>

@@ -352,14 +352,13 @@ public class ExMarioAgent implements AgentInterface {
 			total_reward -= reward_vector.get(itr);
 		}
 
-//		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
-//			for (int col = 0; col < NUMBER_OF_ACTIONS; col++){
-//				if (policy_itr_table[row][col] != 0){
-//
-//					policy_table[row][col] -= policy_itr_table[row][col];
-//				}
-//			}
-//		}
+		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++){
+			for (int col = 0; col < NUMBER_OF_ACTIONS; col++){
+				if (policy_itr_table[row][col] != 0){
+					policy_table[row][col] /= policy_itr_table[row][col];
+				}
+			}
+		}
 	}
 
 	public Action agent_step(double r, Observation o) {
@@ -561,7 +560,7 @@ public class ExMarioAgent implements AgentInterface {
         }
 		if (explorationProb != 0) {
 
-			double biggest_value = -99.0;
+			double biggest_value = Double.NEGATIVE_INFINITY;
 			int biggest_value_itr = 0;
 			double val;
 
@@ -587,9 +586,9 @@ public class ExMarioAgent implements AgentInterface {
                 System.out.println("biggest_value: " + biggest_value );
 			}
 
-			if (isPolicyTableEmpty()){
-			    biggest_value_itr = 9;
-            }
+//			if (isPolicyTableEmpty()){
+//			    biggest_value_itr = 9;
+//            }
             int[] cur_action = getActionFromActionIndex(biggest_value_itr);
 
             act.intArray = cur_action;
@@ -712,11 +711,11 @@ public class ExMarioAgent implements AgentInterface {
         JSONObject j_obj = new JSONObject(jsonStr);
 
 	    // Read reward_vector
-	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
-	    for (int i = 0; i < rv_ja.length(); i++){
-	        reward_vector.add(rv_ja.getDouble(i));
-	    }
-	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
+//	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
+//	    for (int i = 0; i < rv_ja.length(); i++){
+//	        reward_vector.add(rv_ja.getDouble(i));
+//	    }
+//	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
 
 	    // Read num_of_times_states_visited
 	    JSONArray stv_ja = j_obj.getJSONArray("num_of_times_states_visited");
@@ -750,18 +749,18 @@ public class ExMarioAgent implements AgentInterface {
         export.println(indent(0) + "{");
 
         // Export reward_vector
-        notBeginning = false;
-        export.println(indent(1) + "\"reward_vector\":");
-        export.println(indent(1) + "[");
-        for (double rw_i : reward_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + rw_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
-        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"reward_vector\":");
+//        export.println(indent(1) + "[");
+//        for (double rw_i : reward_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + rw_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+//        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
 
         // Export num_of_times_states_visited
         notBeginning = false;
