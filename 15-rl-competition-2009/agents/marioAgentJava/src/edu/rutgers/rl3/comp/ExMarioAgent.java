@@ -58,7 +58,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	private Boolean[] cur_state;
 
-	private int getIndexOfReward(Boolean[] states){
+	private int getIndexOfPolicyTable(Boolean[] states){
         String gen_string = "";
         for (boolean s : states){
             gen_string += s ? "1" : "0";
@@ -342,6 +342,7 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public void updatePolicyTable(double r, int state_index, int action_index) {
+	    System.out.println("state_index: " + state_index + " | action_index: " + action_index + " | r: " + r);
 		policy_table[state_index][action_index] += r;
 	}
 
@@ -352,7 +353,7 @@ public class ExMarioAgent implements AgentInterface {
 		total_reward += r;
 		episode_reward += r;
 
-		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
+//		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
 		agentStepDebugOutStart(r);
 		debug_out.println("\t\t{");
 
@@ -367,7 +368,7 @@ public class ExMarioAgent implements AgentInterface {
 
 	public void agent_end(double r) {
 		reward_vector.add(r);
-		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
+//		updatePolicyTable(r, state_vector.get(state_vector.size()-1), action_vector.get(action_vector.size()-1));
 
 		if (this_actions.size() > 7) {
 			last_actions = this_actions;
@@ -434,88 +435,132 @@ public class ExMarioAgent implements AgentInterface {
 			Action act = last_actions.get(step_number);
 			this_actions.add(act);
 
+			state_vector.add(getIndexOfPolicyTable(cur_state));
+		    action_vector.add(findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2])));
+
 			getActionDebugOut(last_actions.size() > step_number, explorationProb, act);
 			return act;
 		}
 
 		Action act = new Action(3, 0);
+
+        Monster mario = ExMarioAgent.getMario(o);
+        Monster[] monsters = ExMarioAgent.getMonsters(o);
+
+        // if mario finishes the level
+        if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!'){
+            cur_state[WIN] = true;
+        }
+
+        /*
+         * Check the blocks in the area to mario's upper right
+         */
+        for (int up=0; up<5; up++) {
+            for (int right = 0; right<5  ; right++) {
+                char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
+                if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
+                else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
+                else if (tile == '$') cur_state[BONUS_ITEM] = true;
+            }
+        }
+
+        /*
+         * Search for a pit in front of mario.
+        */
+        boolean is_pit = false;
+        for (int right = 0; !is_pit && right<5; right++) {
+            boolean pit_col = true;
+            for (int down=0; pit_col && mario.y-down>=0; down++) {
+                char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
+                if (tile != ' ' && tile != 'M' && tile != '\0')
+                    pit_col = false;
+            }
+            if (pit_col)
+                is_pit = true;
+        }
+
+        if (is_pit){
+            cur_state[PIT] = true;
+        }
+
+        /*
+         * Search for a pit in front of mario.
+         */
+        boolean is_pipe = false;
+        for (int right = 0; !is_pipe && right<3; right++) {
+            char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
+            if (tile == '|')
+                cur_state[PIPE] = true;
+                break;
+        }
+
+        /*
+         * Look for nearby monsters by checking the positions against mario's
+         */
+        for (Monster m : monsters) {
+            if (m.type == 0 || m.type == 10 || m.type == 11) {
+                // m is mario
+                continue;
+            }
+            double dx = m.x-mario.x;
+            double dy = m.y-mario.y;
+            if (dx > -1 && dx < 10 && dy > -4 && dy < 4) {
+                /* the more monsters and the closer they are, the more likely
+                 * mario is to jump.
+                 */
+                cur_state[MONSTER] = true;
+            }
+        }
+
+//        private static final int MONSTER = 0;
+//        private static final int PIT = 1;
+//        private static final int PIPE = 2;
+//        private static final int BREAKABLE_BLOCK = 3;
+//        private static final int QUESTION_BLOCK = 4;
+//        private static final int BONUS_ITEM = 5;
+//        private static final int WIN = 6;
+//        private static final int DEAD = 7;
+//        private static final int SOFT_POLICY = 4;
+
+        System.out.println("------------");
+        System.out.println("MONSTER\tPIT\tPIPE\tBREAKA\tQUEST\tBONUS");
+
+        for (int i = 0; i < 6; i++){
+            System.out.print(cur_state[i] + "\t");
+        }
+
+        System.out.println("ID: " + getIndexOfPolicyTable(cur_state));
+
+
 		if (explorationProb != 0) {
-			Monster mario = ExMarioAgent.getMario(o);
-			Monster[] monsters = ExMarioAgent.getMonsters(o);
 
-			// if mario finishes the level
-			if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!')
-				cur_state[WIN] = true;
+//			int biggest_value = -99;
+//			int biggest_value_itr = 0;
+//			for (int itr = 0; itr < policy_table[getIndexOfPolicyTable(cur_state)].length; itr++) {
+//				if (policy_table[getIndexOfPolicyTable(cur_state)][itr] > biggest_value) {
+//					biggest_value_itr = itr;
+//					biggest_value = policy_table[getIndexOfPolicyTable(cur_state)][itr];
+//				}
+//			}
 
-			/*
-			 * Check the blocks in the area to mario's upper right
-			 */
-			for (int up=0; up<5; up++) {
-				for (int right = 0; right<5  ; right++) {
-					char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
-					if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
-					else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
-					else if (tile == '$') cur_state[BONUS_ITEM] = true;
-				}
-			}
 
-			/*
-			 * Search for a pit in front of mario.
-			*/
-			boolean is_pit = false;
-			for (int right = 0; !is_pit && right<5; right++) {
-				boolean pit_col = true;
-				for (int down=0; pit_col && mario.y-down>=0; down++) {
-					char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
-					if (tile != ' ' && tile != 'M' && tile != '\0')
-						pit_col = false;
-				}
-				if (pit_col)
-					is_pit = true;
-			}
+//            if (getIndexOfPolicyTable(cur_state) == 0){
+//                act.intArray[0] = 1;
+//                act.intArray[1] = 0;
+//                act.intArray[2] = 0;
+//            } else {
+              int biggest_value_itr = 8;
+              int[] cur_action = convertBackToAction(biggest_value_itr);
+//                for (int i = 0; i < cur_action.length; i++){
+//                    System.out.println("cur_action[" + i + "]: " + cur_action[i]);
+//                }
+              act.intArray = cur_action;
 
-			if (is_pit)
-				cur_state[PIT] = true;
+//            }
 
-			/*
-			 * Search for a pit in front of mario.
-			 */
-			boolean is_pipe = false;
-			for (int right = 0; !is_pipe && right<3; right++) {
-				char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
-				if (tile == '|')
-					cur_state[PIPE] = true;
-					break;
-			}
 
-			/*
-			 * Look for nearby monsters by checking the positions against mario's
-			 */
-			for (Monster m : monsters) {
-				if (m.type == 0 || m.type == 10 || m.type == 11) {
-					// m is mario
-					continue;
-				}
-				double dx = m.x-mario.x;
-				double dy = m.y-mario.y;
-				if (dx > -1 && dx < 10 && dy > -4 && dy < 4) {
-					/* the more monsters and the closer they are, the more likely
-					 * mario is to jump.
-					 */
-					cur_state[MONSTER] = true;
-				}
-			}
 
-			int biggest_value = -99;
-			int biggest_value_itr = 0;
-			for (int itr = 0; itr < policy_table[getIndexOfReward(cur_state)].length; itr++) {
-				if (policy_table[getIndexOfReward(cur_state)][itr] > biggest_value) {
-					biggest_value_itr = itr;
-					biggest_value = policy_table[getIndexOfReward(cur_state)][itr];
-				}
-			}
-			int[] cur_action = convertBackToAction(biggest_value_itr);
-			act.intArray = cur_action;
+
 		}
 
 		else {
@@ -527,9 +572,12 @@ public class ExMarioAgent implements AgentInterface {
 			act.intArray[2] = rand.nextInt(2);
 		}
 
-		num_of_times_states_visited[getIndexOfReward(cur_state)]++;
 
-		state_vector.add(getIndexOfReward(cur_state));
+
+
+		num_of_times_states_visited[getIndexOfPolicyTable(cur_state)]++;
+
+		state_vector.add(getIndexOfPolicyTable(cur_state));
 		action_vector.add(findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2])));
 
 		//add the action to the trajectory being recorded, so it can be reused next trial
