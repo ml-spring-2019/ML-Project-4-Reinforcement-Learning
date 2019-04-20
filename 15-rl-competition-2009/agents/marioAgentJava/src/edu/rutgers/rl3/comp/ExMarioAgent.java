@@ -358,20 +358,27 @@ public class ExMarioAgent implements AgentInterface {
 	    }
 	}
 
-	public Action agent_start(Observation o) {
-	    System.out.println("====================================================");
-        System.out.println("[Episode " + episode_num + "]: Policy table for state 0 (flat ground):");
+	private void printPolicy(int num){
+        System.out.println("[Episode " + episode_num + "]: Policy table for state " + num + ": ");
         double largest = Double.NEGATIVE_INFINITY;
         int largest_ind = -1;
 		for (int i = 0; i < NUMBER_OF_ACTIONS; i++){
-		    System.out.println(getActionAsString(i) + ": " + policy_table[0][i] + " \t itr: " + policy_itr_table[0][i]);
-		    if (policy_table[0][i] > largest){
-		        largest = policy_table[0][i];
+		    System.out.println(getActionAsString(i) + ": " + policy_table[num][i] + " \t itr: " + policy_itr_table[num][i]);
+		    if (policy_table[num][i] > largest){
+		        largest = policy_table[num][i];
 		        largest_ind = i;
 		    }
 		}
 		System.out.println("Largest: " + largest + " | Preferred action: " + getActionAsString(largest_ind));
 
+	}
+
+	public Action agent_start(Observation o) {
+	    System.out.println("====================================================");
+	    printPolicy(0);
+	    printPolicy(256);
+	    printPolicy(320);
+	    printPolicy(288);
 		isDead = true;
 
 
@@ -463,7 +470,7 @@ public class ExMarioAgent implements AgentInterface {
 	private static final int BREAKABLE_BLOCK = 6;
 	private static final int QUESTION_BLOCK = 7;
 	private static final int BONUS_ITEM = 8;
-	private static final int SOFT_POLICY = 5;
+	private static final int SOFT_POLICY = 4;
 
 	int[] convertBackToAction(int code){
 		 int direction = ((code - (code % 100)) / 100) - 1;
@@ -589,13 +596,13 @@ public class ExMarioAgent implements AgentInterface {
             double dx = m.x-mario.x;
             double dy = m.y-mario.y;
 
-						if (dx > -1 && dx < 4)
+						if (dx > -6 && dx < 6)
 							cur_state[MONSTER_NEAR] = true;
-            else if (dx > -1 && dx < 10)
+            else if (dx > -12 && dx < 12)
               cur_state[MONSTER_FAR] = true;
-						if (dy > 1 && dy < 5)
+						if (dy > 1 && dy < 15)
 							cur_state[MONSTER_ABOVE] = true;
-						else if (dy < -1 && dy > -5)
+						else if (dy < -1 && dy > -15)
 							cur_state[MONSTER_BELOW] = true;
         }
 
@@ -625,12 +632,27 @@ public class ExMarioAgent implements AgentInterface {
 			Random rand = new Random();
 			walk_hesitation = Math.random();
 			jump_hesitation = Math.random();
-			act.intArray[0] = Math.random()>walk_hesitation?0:1;
+			act.intArray[0] = rand_.nextInt(3) - 1;
 			act.intArray[1] = Math.random()>jump_hesitation?1:0;
 			act.intArray[2] = rand.nextInt(2);
 		}
 
 		int state_index = getIndexOfPolicyTable(cur_state);
+//
+//		private static final int MONSTER_NEAR = 0;
+//	private static final int MONSTER_FAR = 1;
+//	private static final int MONSTER_ABOVE = 2;
+//	private static final int MONSTER_BELOW = 3;
+//	private static final int PIT = 4;
+//	private static final int PIPE = 5;
+//	private static final int BREAKABLE_BLOCK = 6;
+//	private static final int QUESTION_BLOCK = 7;
+//	private static final int BONUS_ITEM = 8;
+//	private static final int SOFT_POLICY = 5;
+
+//		System.out.println("M_NEAR\tM_FAR\tM_ABV\tM_BEL\tPIT\tB_BLO\t?_BLO\tB_ITM\tstate_index: " + state_index);
+//		System.out.println(cur_state[0] + "\t" + cur_state[1] + "\t" + cur_state[2] + "\t" + cur_state[3] + "\t" + cur_state[4] + "\t" + cur_state[5] + "\t" + cur_state[6] + "\t" + cur_state[7] + "\t" + cur_state[8] + "\t");
+
 
 		int action_index = findActionCol.get(convertForFindActionCol(act.intArray[0], act.intArray[1], act.intArray[2]));
 		state_vector.add(state_index);

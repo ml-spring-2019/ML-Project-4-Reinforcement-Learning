@@ -29,13 +29,13 @@ public class consoleTrainer {
 		//consoleTrainerHelper.loadPolyathlon(whichTrainingMDP); //whichTrainingMDP should be in [0,5]
 		//consoleTrainerHelper.loadOctopus(); 
 		consoleTrainerHelper.loadAcrobot(whichTrainingMDP);//whichTrainingMDP should be in [0,39] //0 is standard acrobot
-		consoleTrainerHelper.loadMario(0,0,0,0);
+		consoleTrainerHelper.loadMario(121,0,0,0);
 
 	
 		RLGlue.RL_init();
 
-		int episodeCount=100; //number of episodes to run
-		int maxEpisodeLength=20000; //set a maxEpisodeLength to cut off long episodes
+		int episodeCount=5000; //number of episodes to run
+		int maxEpisodeLength=40000; //set a maxEpisodeLength to cut off long episodes
 	
 		int totalSteps=0;//counter for the total number of steps taken to finish all episodes
 		//run the episodes with RL_episode(maxEpisodeLength)
