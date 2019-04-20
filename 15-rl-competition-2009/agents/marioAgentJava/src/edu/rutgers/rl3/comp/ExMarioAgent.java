@@ -47,10 +47,13 @@ public class ExMarioAgent implements AgentInterface {
 	private ArrayList<Double> reward_vector;
 	private int[] num_of_times_states_visited;
 	private double[][] policy_table;
+	private double[][] reward_table;
 	private int[][] policy_itr_table;
 	private double total_reward;
 	private double episode_reward;
 	private int episode_num;
+	private int num_losses;
+	private int num_wins;
 	private Boolean isDead;
 
 	Map<Integer, Integer> findActionCol;
@@ -69,16 +72,20 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	private void initializeStateRewards(){
-    int rows = (int) Math.pow(2, NUMBER_OF_STATES);
-    int cols = NUMBER_OF_ACTIONS;
-    policy_table = new double[rows][NUMBER_OF_ACTIONS];
-		policy_itr_table = new int[rows][NUMBER_OF_ACTIONS];
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < cols; j++){
-            policy_table[i][j] = 0;
-						policy_itr_table[i][j] = 0;
+        int rows = (int) Math.pow(2, NUMBER_OF_STATES);
+        int cols = NUMBER_OF_ACTIONS;
+
+        policy_table = new double[rows][NUMBER_OF_ACTIONS];
+        reward_table = new double[rows][NUMBER_OF_ACTIONS];
+        policy_itr_table = new int[rows][NUMBER_OF_ACTIONS];
+
+        for (int i = 0; i < rows; i++){
+            for (int j = 0; j < cols; j++){
+                policy_table[i][j] = 0;
+                reward_table[i][j] = 0.0;
+                policy_itr_table[i][j] = 0;
+            }
         }
-    }
 	}
 
 	private void flush_policy_itr_table(){
@@ -320,10 +327,11 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public void agent_cleanup() {
-    cleanupDebugOut();
-    debug_out.close();
-    exportTablesToFile();
-    System.out.println("Check debug_log.json for output.");
+        cleanupDebugOut();
+        debug_out.close();
+        exportTablesToFile();
+        System.out.println("# wins: " + num_wins);
+        System.out.println("# losses: " + num_losses);
 	}
 
 	private String getActionAsString(int a){
@@ -374,11 +382,11 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public Action agent_start(Observation o) {
-	    System.out.println("====================================================");
-	    printPolicy(0);
-	    printPolicy(256);
-	    printPolicy(320);
-	    printPolicy(288);
+//	    System.out.println("====================================================");
+//	    printPolicy(0);
+//	    printPolicy(256);
+//	    printPolicy(320);
+//	    printPolicy(288);
 		isDead = true;
 
 
@@ -407,8 +415,14 @@ public class ExMarioAgent implements AgentInterface {
             int ind2 = action_vector.get(itr);
 			double my_rew = episode_reward - reward_vector.get(itr);
 
-			policy_table[ind1][ind2] = (policy_table[ind1][ind2] * ((double)(policy_itr_table[ind1][ind2]) - 1) + my_rew) / (double)policy_itr_table[ind1][ind2];
-			episode_reward -= my_rew;
+            policy_itr_table[ind1][ind2]++;
+            reward_table[ind1][ind2] += my_rew;
+
+			policy_table[ind1][ind2] = reward_table[ind1][ind2] / (double)(policy_itr_table[ind1][ind2]);
+			episode_reward -= reward_vector.get(itr);
+//			if (ind2 == 0 && ind1 == 0){
+//			    System.out.println("reward_table[" + ind1 + "][" + ind2 + "]: " + reward_table[ind1][ind2] + "\t| policy_itr_table[" + ind1 + "][" + ind2 + "]: " + policy_itr_table[ind1][ind2] + "\t| policy_table[" + ind1 + "][" + ind2 + "]: " + policy_table[ind1][ind2] + "\t| episode_reward: " + episode_reward);
+//			}
 		}
 	}
 
@@ -429,6 +443,10 @@ public class ExMarioAgent implements AgentInterface {
 		return a;
 	}
 
+	private void printResult(){
+	    System.out.println("[Episode " + (episode_num - 1) + "]: " + (isDead ? "lost..." : "WIN!"));
+	}
+
 	public void agent_end(double r) {
 		total_reward += r;
 		episode_reward += r;
@@ -446,10 +464,15 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < num_of_times_states_visited.length; itr++)
 			num_of_times_states_visited[itr] = 0;
 
-			agentEndDebugOut();
-              debug_out.print("\t}");
-		if (isDead)	System.out.println("MARIO WAS KILLED X(");
-		else System.out.println("MARIO WON!! :D");
+		agentEndDebugOut();
+        debug_out.print("\t}");
+
+        if (isDead){
+            num_losses++;
+        } else {
+            num_wins++;
+        }
+        printResult();
 
 		reward_vector.clear();
 		action_vector.clear();
@@ -470,7 +493,7 @@ public class ExMarioAgent implements AgentInterface {
 	private static final int BREAKABLE_BLOCK = 6;
 	private static final int QUESTION_BLOCK = 7;
 	private static final int BONUS_ITEM = 8;
-	private static final int SOFT_POLICY = 4;
+	private static final int SOFT_POLICY = 3;
 
 	int[] convertBackToAction(int code){
 		 int direction = ((code - (code % 100)) / 100) - 1;
@@ -511,15 +534,6 @@ public class ExMarioAgent implements AgentInterface {
 			}
 	}
 
-	Boolean isPolicyTableEmpty(){
-		for (int row = 0; row < (int) Math.pow(2, NUMBER_OF_STATES); row++) {
-			for (int col = 0; col < NUMBER_OF_ACTIONS; col++) {
-				if (policy_table[row][col] != 0) return false;
-			}
-		}
-		return true;
-	}
-
 // States: tiles
 // states: monster, pit, pipe, regular block, unbreakable block, bonus items
 	Action getAction(Observation o) {
@@ -539,16 +553,19 @@ public class ExMarioAgent implements AgentInterface {
         Monster mario = ExMarioAgent.getMario(o);
         Monster[] monsters = ExMarioAgent.getMonsters(o);
 
-        // if mario finishes the level
-        if (ExMarioAgent.getTileAt(mario.x, mario.y, o) == '!'){
-            isDead = false;
+        // if mario finishes the level, checking multiple tiles in case mario moves fast
+        for (int i = 0; i < 5; i++){
+            if (ExMarioAgent.getTileAt(mario.x + i, mario.y, o) == '!'){
+                isDead = false;
+            }
         }
+
 
         /*
          * Check the blocks in the area to mario's upper right
          */
         for (int up=0; up<5; up++) {
-            for (int right = 0; right<3; right++) {
+            for (int right = 0; right<2; right++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
                 if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
                 else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
@@ -560,7 +577,7 @@ public class ExMarioAgent implements AgentInterface {
          * Search for a pit in front of mario.
         */
         boolean is_pit = false;
-        for (int right = 0; !is_pit && right<3; right++) {
+        for (int right = 0; !is_pit && right<2; right++) {
             boolean pit_col = true;
             for (int down=0; pit_col && mario.y-down>=0; down++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
@@ -596,14 +613,14 @@ public class ExMarioAgent implements AgentInterface {
             double dx = m.x-mario.x;
             double dy = m.y-mario.y;
 
-						if (dx > -6 && dx < 6)
-							cur_state[MONSTER_NEAR] = true;
-            else if (dx > -12 && dx < 12)
+            if (dx > 0 && dx < 6)
+                cur_state[MONSTER_NEAR] = true;
+            else if (dx > 0 && dx < 12)
               cur_state[MONSTER_FAR] = true;
-						if (dy > 1 && dy < 15)
-							cur_state[MONSTER_ABOVE] = true;
-						else if (dy < -1 && dy > -15)
-							cur_state[MONSTER_BELOW] = true;
+            if (dy > 1 && dy < 15 && dx > 0)
+                cur_state[MONSTER_ABOVE] = true;
+            else if (dy < -1 && dy > -15 && dx > 0)
+                cur_state[MONSTER_BELOW] = true;
         }
 
 		if (explorationProb != 0) {
@@ -633,7 +650,7 @@ public class ExMarioAgent implements AgentInterface {
 			walk_hesitation = Math.random();
 			jump_hesitation = Math.random();
 			act.intArray[0] = rand_.nextInt(3) - 1;
-			act.intArray[1] = Math.random()>jump_hesitation?1:0;
+			act.intArray[1] = rand_.nextInt(2);
 			act.intArray[2] = rand.nextInt(2);
 		}
 
@@ -658,7 +675,6 @@ public class ExMarioAgent implements AgentInterface {
 		state_vector.add(state_index);
 		action_vector.add(action_index);
 
-		policy_itr_table[state_index][action_index]++;
 		//add the action to the trajectory being recorded, so it can be reused next trial
 		this_actions.add(act);
 
@@ -759,26 +775,26 @@ public class ExMarioAgent implements AgentInterface {
 	    System.out.println("Parsing json.");
         JSONObject j_obj = new JSONObject(jsonStr);
 
-	    // Read reward_vector
-	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
-	    for (int i = 0; i < rv_ja.length(); i++){
-	        reward_vector.add(rv_ja.getDouble(i));
-	    }
-	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
-
-	    // Read state_vector
-	    rv_ja = j_obj.getJSONArray("state_vector");
-	    for (int i = 0; i < rv_ja.length(); i++){
-	        state_vector.add(rv_ja.getInt(i));
-	    }
-	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to state_vector.");
-
-	    // Read action_vector
-	    rv_ja = j_obj.getJSONArray("action_vector");
-	    for (int i = 0; i < rv_ja.length(); i++){
-	        action_vector.add(rv_ja.getInt(i));
-	    }
-	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to action_vector.");
+//	    // Read reward_vector
+//	    JSONArray rv_ja = j_obj.getJSONArray("reward_vector");
+//	    for (int i = 0; i < rv_ja.length(); i++){
+//	        reward_vector.add(rv_ja.getDouble(i));
+//	    }
+//	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to reward_vector.");
+//
+//	    // Read state_vector
+//	    rv_ja = j_obj.getJSONArray("state_vector");
+//	    for (int i = 0; i < rv_ja.length(); i++){
+//	        state_vector.add(rv_ja.getInt(i));
+//	    }
+//	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to state_vector.");
+//
+//	    // Read action_vector
+//	    rv_ja = j_obj.getJSONArray("action_vector");
+//	    for (int i = 0; i < rv_ja.length(); i++){
+//	        action_vector.add(rv_ja.getInt(i));
+//	    }
+//	    System.out.println("Read " + rv_ja.length() + " elements from " + export_filename + " to action_vector.");
 
 //	    // Read num_of_times_states_visited
 //	    JSONArray stv_ja = j_obj.getJSONArray("num_of_times_states_visited");
@@ -799,6 +815,16 @@ public class ExMarioAgent implements AgentInterface {
 	        }
 	    }
 	    System.out.println("Read " + (pt_ija.length() * pt_ija.getJSONArray(0).length()) + " elements from " + export_filename + " to policy_table.");
+
+	     // Read reward_table
+	    pt_ija = j_obj.getJSONArray("reward_table");
+	    for (int i = 0; i < pt_ija.length(); i++){
+	        JSONArray pt_jja = pt_ija.getJSONArray(i);
+	        for (int j = 0; j < pt_jja.length(); j++){
+	            reward_table[i][j] = pt_jja.getDouble(j);
+	        }
+	    }
+	    System.out.println("Read " + (pt_ija.length() * pt_ija.getJSONArray(0).length()) + " elements from " + export_filename + " to reward_table.");
 
 	    // Read policy_itr_table
 	    JSONArray pit_ija = j_obj.getJSONArray("policy_itr_table");
@@ -825,46 +851,46 @@ public class ExMarioAgent implements AgentInterface {
         export.println(indent(0) + "{");
 
         // Export reward_vector
-        notBeginning = false;
-        export.println(indent(1) + "\"reward_vector\":");
-        export.println(indent(1) + "[");
-        for (double rw_i : reward_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + rw_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
-        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"reward_vector\":");
+//        export.println(indent(1) + "[");
+//        for (double rw_i : reward_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + rw_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+//        System.out.println("Wrote " + reward_vector.size() + " elements from reward_vector to " + export_filename + ".");
 
         // Export state_vector
-        notBeginning = false;
-        export.println(indent(1) + "\"state_vector\":");
-        export.println(indent(1) + "[");
-        for (int rw_i : state_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + rw_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
-        System.out.println("Wrote " + state_vector.size() + " elements from state_vector to " + export_filename + ".");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"state_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int rw_i : state_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + rw_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+//        System.out.println("Wrote " + state_vector.size() + " elements from state_vector to " + export_filename + ".");
 
         // Export action_vector
-        notBeginning = false;
-        export.println(indent(1) + "\"action_vector\":");
-        export.println(indent(1) + "[");
-        for (int rw_i : action_vector){
-            if (notBeginning){
-                export.println(",");
-            }
-            export.print(indent(2) + rw_i);
-            notBeginning = true;
-        }
-        export.println("\n" + indent(1) + "],");
-        System.out.println("Wrote " + action_vector.size() + " elements from action_vector to " + export_filename + ".");
+//        notBeginning = false;
+//        export.println(indent(1) + "\"action_vector\":");
+//        export.println(indent(1) + "[");
+//        for (int rw_i : action_vector){
+//            if (notBeginning){
+//                export.println(",");
+//            }
+//            export.print(indent(2) + rw_i);
+//            notBeginning = true;
+//        }
+//        export.println("\n" + indent(1) + "],");
+//        System.out.println("Wrote " + action_vector.size() + " elements from action_vector to " + export_filename + ".");
 
         // Export num_of_times_states_visited
 //        notBeginning = false;
@@ -907,6 +933,29 @@ public class ExMarioAgent implements AgentInterface {
         }
         export.println("\n" + indent(1) + "],");
         System.out.println("Wrote " + policy_table.length * policy_table[0].length + " elements from policy_table to " + export_filename + ".");
+
+        // Export reward_table
+        notBeginning = false;
+        export.println(indent(1) + "\"reward_table\":");
+        export.println(indent(1) + "[");
+        for (double[] pt_i : reward_table){
+            if (notBeginning){
+                export.println(",");
+            }
+            export.print(indent(2) + "[");
+            notBeginning2 = false;
+            for (double pt_j : pt_i){
+                if (notBeginning2){
+                    export.print(", ");
+                }
+                export.print(pt_j);
+                notBeginning2 = true;
+            }
+            export.print("]");
+            notBeginning = true;
+        }
+        export.println("\n" + indent(1) + "],");
+        System.out.println("Wrote " + reward_table.length * reward_table[0].length + " elements from reward_table to " + export_filename + ".");
 
         //Export policy_itr_table
         notBeginning = false;
