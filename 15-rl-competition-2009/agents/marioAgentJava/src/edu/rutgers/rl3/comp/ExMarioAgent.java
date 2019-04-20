@@ -382,8 +382,8 @@ public class ExMarioAgent implements AgentInterface {
 	}
 
 	public Action agent_start(Observation o) {
-//	    System.out.println("====================================================");
-//	    printPolicy(0);
+	    System.out.println("====================================================");
+	    printPolicy(0);
 //	    printPolicy(256);
 //	    printPolicy(320);
 //	    printPolicy(288);
@@ -493,7 +493,7 @@ public class ExMarioAgent implements AgentInterface {
 	private static final int BREAKABLE_BLOCK = 6;
 	private static final int QUESTION_BLOCK = 7;
 	private static final int BONUS_ITEM = 8;
-	private static final int SOFT_POLICY = 3;
+	private static final int SOFT_POLICY = 5;
 
 	int[] convertBackToAction(int code){
 		 int direction = ((code - (code % 100)) / 100) - 1;
