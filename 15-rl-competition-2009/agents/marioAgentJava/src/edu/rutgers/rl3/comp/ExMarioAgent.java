@@ -36,7 +36,7 @@ import java.util.Hashtable;
  */
 public class ExMarioAgent implements AgentInterface {
 
-	private int NUMBER_OF_STATES = 9;
+	private int NUMBER_OF_STATES = 13;
 	private int NUMBER_OF_ACTIONS = 12;
 	private final String export_filename = "ref_export.json";
 /*
@@ -488,12 +488,16 @@ public class ExMarioAgent implements AgentInterface {
 	private static final int MONSTER_FAR = 1;
 	private static final int MONSTER_ABOVE = 2;
 	private static final int MONSTER_BELOW = 3;
-	private static final int PIT = 4;
-	private static final int PIPE = 5;
-	private static final int BREAKABLE_BLOCK = 6;
-	private static final int QUESTION_BLOCK = 7;
-	private static final int BONUS_ITEM = 8;
-	private static final int SOFT_POLICY = 5;
+	private static final int PIT_FAR = 4;
+	private static final int PIT_NEAR = 5;
+	private static final int QUESTION_BLOCK = 6;
+	private static final int BONUS_ITEM_FAR = 7;
+	private static final int BONUS_ITEM_NEAR = 8;
+	private static final int COINS = 9;
+	private static final int BREAKABLE_BLOCK = 10;
+	private static final int HIGHER_GROUND_NEAR = 11;
+	private static final int HIGHER_GROUND_FAR = 12;
+	private static final int SOFT_POLICY = 4;
 
 	int[] convertBackToAction(int code){
 		 int direction = ((code - (code % 100)) / 100) - 1;
@@ -560,16 +564,29 @@ public class ExMarioAgent implements AgentInterface {
             }
         }
 
+        // check for ground higher than mario
+        for (int r = 0; r < 6; r++){
+            char tile = ExMarioAgent.getTileAt(mario.x+r, mario.y + 1, o);
+            if (tile != ' ' && tile != 'M' && tile != '\0'){
+                if (r < 3){
+                    cur_state[HIGHER_GROUND_NEAR] = true;
+                } else {
+                    cur_state[HIGHER_GROUND_FAR] = true;
+                }
+                break;
+            }
+        }
+
 
         /*
          * Check the blocks in the area to mario's upper right
          */
         for (int up=0; up<5; up++) {
-            for (int right = 0; right<2; right++) {
+            for (int right = 0; right<7; right++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y+up, o);
+                if (tile == '?') cur_state[QUESTION_BLOCK] = true;
                 if (tile == 'b') cur_state[BREAKABLE_BLOCK] = true;
-                else if (tile == '?') cur_state[QUESTION_BLOCK] = true;
-                else if (tile == '$') cur_state[BONUS_ITEM] = true;
+                if (tile == '$') cur_state[COINS] = true;
             }
         }
 
@@ -577,50 +594,65 @@ public class ExMarioAgent implements AgentInterface {
          * Search for a pit in front of mario.
         */
         boolean is_pit = false;
-        for (int right = 0; !is_pit && right<2; right++) {
+        int right;
+        for (right = 0; !is_pit && right<6; right++) {
             boolean pit_col = true;
             for (int down=0; pit_col && mario.y-down>=0; down++) {
                 char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y-down, o);
                 if (tile != ' ' && tile != 'M' && tile != '\0')
                     pit_col = false;
             }
-            if (pit_col)
+            if (pit_col){
                 is_pit = true;
+            }
         }
 
-        if (is_pit){
-            cur_state[PIT] = true;
+        if (is_pit && right < 3){
+            cur_state[PIT_NEAR] = true;
+        } else if (is_pit){
+            cur_state[PIT_FAR] = true;
         }
 
         /*
          * Search for a pipe in front of mario.
          */
-        for (int right = 0; right<3; right++) {
-            char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
-            if (tile == '|')
-                cur_state[PIPE] = true;
-                break;
-        }
+//        for (int right = 0; right<3; right++) {
+//            char tile = ExMarioAgent.getTileAt(mario.x+right, mario.y, o);
+//            if (tile == '|')
+//                cur_state[PIPE] = true;
+//                break;
+//        }
 
         /*
          * Look for nearby monsters by checking the positions against mario's
          */
         for (Monster m : monsters) {
-            if (m.type == 0 || m.type == 10 || m.type == 11) {
+            if (m.type == 0 || m.type == 10 || m.type == 11 || m.type == 8) {
                 // m is mario
                 continue;
             }
             double dx = m.x-mario.x;
             double dy = m.y-mario.y;
+            if (m.type == 6 || m.type == 7){
+                if (dx < -3 && dx > 3){
+                    cur_state[BONUS_ITEM_FAR] = true;
+//                    System.out.println("far");
+                } else {
+                    cur_state[BONUS_ITEM_NEAR] = true;
+//                    System.out.println("near");
+                }
 
-            if (dx > 0 && dx < 6)
-                cur_state[MONSTER_NEAR] = true;
-            else if (dx > 0 && dx < 12)
-              cur_state[MONSTER_FAR] = true;
-            if (dy > 1 && dy < 15 && dx > 0)
-                cur_state[MONSTER_ABOVE] = true;
-            else if (dy < -1 && dy > -15 && dx > 0)
-                cur_state[MONSTER_BELOW] = true;
+            } else {
+
+                if (dx > -2 && dx < 6)
+                    cur_state[MONSTER_NEAR] = true;
+                else if (dx > 3 && dx < 12)
+                  cur_state[MONSTER_FAR] = true;
+                if (dy > 1 && dy < 15 && dx > 0)
+                    cur_state[MONSTER_ABOVE] = true;
+                else if (dy < -1 && dy > -15 && dx > 0)
+                    cur_state[MONSTER_BELOW] = true;
+            }
         }
 
 		if (explorationProb != 0) {
@@ -712,11 +744,11 @@ public class ExMarioAgent implements AgentInterface {
         debug_out.println(indent(4) + "\"a.intArray[1]\": " + act.intArray[1] + ",");
         debug_out.println(indent(4) + "\"a.intArray[2]\": " + act.intArray[2] + ",");
         // debug_out.println(indent(4) + "\"cur_state[MONSTER]\": " + cur_state[MONSTER] + ",");
-        debug_out.println(indent(4) + "\"cur_state[PIT]\": " + cur_state[PIT] + ",");
-        debug_out.println(indent(4) + "\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
-        debug_out.println(indent(4) + "\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
+//        debug_out.println(indent(4) + "\"cur_state[PIT]\": " + cur_state[PIT] + ",");
+//        debug_out.println(indent(4) + "\"cur_state[PIPE]\": " + cur_state[PIPE] + ",");
+//        debug_out.println(indent(4) + "\"cur_state[BREAKABLE_BLOCK]\": " + cur_state[BREAKABLE_BLOCK] + ",");
         debug_out.println(indent(4) + "\"cur_state[QUESTION_BLOCK]\": " + cur_state[QUESTION_BLOCK] + ",");
-        debug_out.println(indent(4) + "\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
+//        debug_out.println(indent(4) + "\"cur_state[BONUS_ITEM]\": " + cur_state[BONUS_ITEM]);
 	}
 
 	private void agentStepDebugOutStart(double r){
