@@ -567,7 +567,7 @@ public class ExMarioAgent implements AgentInterface {
         // check for ground higher than mario
         for (int r = 0; r < 6; r++){
             char tile = ExMarioAgent.getTileAt(mario.x+r, mario.y + 1, o);
-            if (tile != ' ' && tile != 'M' && tile != '\0'){
+            if (tile != ' ' && tile != 'M' && tile != '\0' && tile != '$'){
                 if (r < 3){
                     cur_state[HIGHER_GROUND_NEAR] = true;
                 } else {
