@@ -413,7 +413,7 @@ public class ExMarioAgent implements AgentInterface {
 		for (int itr = 0; itr < reward_vector.size(); itr++){
 		    int ind1 = state_vector.get(itr);
             int ind2 = action_vector.get(itr);
-			double my_rew = episode_reward - reward_vector.get(itr);
+			double my_rew = episode_reward;
 
             policy_itr_table[ind1][ind2]++;
             reward_table[ind1][ind2] += my_rew;
@@ -965,6 +965,8 @@ public class ExMarioAgent implements AgentInterface {
         }
         export.println("\n" + indent(1) + "],");
         System.out.println("Wrote " + policy_table.length * policy_table[0].length + " elements from policy_table to " + export_filename + ".");
+
+
 
         // Export reward_table
         notBeginning = false;
